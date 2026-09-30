@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@theme {
+	--font-sans: "Nunito Sans", "Segoe UI", sans-serif;
+	--font-display: "Outfit", "Segoe UI", sans-serif;
+
+	--color-canvas: #f4f3fa;
+	--color-ink: #17132b;
+	--color-ink-muted: #3b355a;
+	--color-line: #d9d5ea;
+	--color-accent: #5b3fd1;
+	--color-accent-strong: #3a17a8;
+	--color-accent-soft: #efebff;
+
+	--radius-blob: 42% 58% 50% 50% / 52% 48% 52% 48%;
+	--shadow-bubble: 0 1px 2px rgba(23, 19, 43, 0.05);
+}
+
+@layer base {
+	body {
+		@apply bg-canvas font-sans text-base/[1.55] text-ink;
+	}
+
+	a {
+		@apply text-accent hover:text-accent-strong;
+	}
+}

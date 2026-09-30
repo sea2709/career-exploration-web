@@ -2,6 +2,22 @@ import { getToolName, isToolUIPart, type UIMessage } from 'ai';
 import { useEffect, useRef, useState } from 'react';
 import HumanCheck from './HumanCheck';
 import MarkdownText from './chat/MarkdownText';
+import { ErrorNote, MotBubble, MotMessage, ThinkingMessage, UserMessage } from './chat/Messages';
+import {
+	CARD,
+	CHOICE,
+	EYEBROW,
+	INPUT,
+	INSET,
+	OUTLINE_BUTTON,
+	PAGE,
+	PAGE_SUBTITLE,
+	PAGE_TITLE,
+	PILL,
+	PRIMARY_BUTTON,
+	STATUS_CHIP,
+	STOP_BUTTON,
+} from './chat/styles';
 import { useVerifiedChat } from './chat/useVerifiedChat';
 
 /** Mirrors the scoreAnswer / finishInterview tool inputs in ../../agent/src/interview-agent.ts. */
@@ -73,7 +89,7 @@ function RatingDots({ rating }: { rating: number }) {
 			{[1, 2, 3, 4, 5].map((n) => (
 				<span
 					key={n}
-					className={`size-2.5 rounded-full ${n <= Math.round(rating) ? (rating >= 4 ? 'bg-emerald-500' : rating >= 3 ? 'bg-amber-400' : 'bg-red-400') : 'bg-slate-200'}`}
+					className={`size-2.5 rounded-full ${n <= Math.round(rating) ? (rating >= 4 ? 'bg-emerald-500' : rating >= 3 ? 'bg-amber-400' : 'bg-red-400') : 'bg-line'}`}
 				/>
 			))}
 		</span>
@@ -85,13 +101,13 @@ function LevelBar({ demonstrated, required }: { demonstrated: number; required: 
 	const pct = (v: number) => `${(Math.min(Math.max(v, 0), 7) / 7) * 100}%`;
 	return (
 		<div className="space-y-1">
-			<div className="relative h-2 rounded-full bg-slate-100">
-				<div className="absolute inset-y-0 left-0 rounded-full bg-slate-700" style={{ width: pct(demonstrated) }} />
+			<div className="relative h-2 rounded-full bg-accent-soft">
+				<div className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: pct(demonstrated) }} />
 				{required != null && (
-					<div className="absolute -inset-y-1 w-0.5 bg-emerald-600" style={{ left: pct(required) }} title="Required level" />
+					<div className="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: pct(required) }} title="Required level" />
 				)}
 			</div>
-			<p className="text-xs text-slate-500">
+			<p className="text-xs text-ink-muted">
 				Demonstrated level {demonstrated.toFixed(1)}
 				{required != null && <> · job needs about {required.toFixed(1)}</>} (O*NET 0–7 scale)
 			</p>
@@ -101,9 +117,9 @@ function LevelBar({ demonstrated, required }: { demonstrated: number; required: 
 
 function ScoreCard({ score }: { score: InterviewScore }) {
 	return (
-		<div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+		<div className={`${CARD} space-y-3 text-sm`}>
 			<div className="flex items-center justify-between gap-2">
-				<p className="font-medium text-slate-900">
+				<p className="font-display text-base font-semibold">
 					Feedback · Question {score.questionNumber} · {score.competency}
 				</p>
 				<RatingDots rating={score.rating} />
@@ -112,15 +128,15 @@ function ScoreCard({ score }: { score: InterviewScore }) {
 				<LevelBar demonstrated={score.demonstratedLevel} required={score.requiredLevel} />
 			)}
 			{score.anchorUsed && (
-				<p className="text-xs text-slate-500">
+				<p className="text-xs text-ink-muted">
 					Closest O*NET example: <span className="italic">“{score.anchorUsed}”</span>
 				</p>
 			)}
 			<div className="grid gap-3 sm:grid-cols-2">
 				{score.strengths.length > 0 && (
 					<div>
-						<p className="font-medium text-emerald-700">What worked</p>
-						<ul className="list-disc space-y-1 pl-5 text-slate-700">
+						<p className="font-bold text-emerald-700">What worked</p>
+						<ul className="list-disc space-y-1 pl-5 text-ink-muted">
 							{score.strengths.map((s) => (
 								<li key={s}>{s}</li>
 							))}
@@ -129,8 +145,8 @@ function ScoreCard({ score }: { score: InterviewScore }) {
 				)}
 				{score.improvements.length > 0 && (
 					<div>
-						<p className="font-medium text-amber-700">To improve</p>
-						<ul className="list-disc space-y-1 pl-5 text-slate-700">
+						<p className="font-bold text-amber-700">To improve</p>
+						<ul className="list-disc space-y-1 pl-5 text-ink-muted">
 							{score.improvements.map((s) => (
 								<li key={s}>{s}</li>
 							))}
@@ -138,8 +154,8 @@ function ScoreCard({ score }: { score: InterviewScore }) {
 					</div>
 				)}
 			</div>
-			<p className="text-slate-700">
-				<span className="font-medium">Stronger answer: </span>
+			<p className={`${INSET} text-ink-muted`}>
+				<span className="font-bold text-ink">Stronger answer: </span>
 				{score.strongerAnswerTip}
 			</p>
 		</div>
@@ -149,25 +165,25 @@ function ScoreCard({ score }: { score: InterviewScore }) {
 function ReportCard({ report }: { report: InterviewReport }) {
 	const readiness = READINESS[report.readiness];
 	return (
-		<div className="space-y-4 rounded-2xl border border-slate-300 p-5">
+		<div className="space-y-4 self-stretch rounded-[22px] border-[1.5px] border-accent bg-white p-5 shadow-bubble">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div>
-					<p className="text-xs uppercase tracking-wide text-slate-500">Interview report</p>
-					<p className="text-lg font-semibold text-slate-900">{report.role}</p>
+					<p className={EYEBROW}>Interview report</p>
+					<p className="font-display text-xl font-semibold">{report.role}</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<RatingDots rating={report.overallRating} />
-					<span className="text-sm text-slate-600">{report.overallRating.toFixed(1)} / 5</span>
-					<span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${readiness.className}`}>
+					<span className="text-sm text-ink-muted">{report.overallRating.toFixed(1)} / 5</span>
+					<span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${readiness.className}`}>
 						{readiness.label}
 					</span>
 				</div>
 			</div>
-			<p className="text-slate-700">{report.summary}</p>
+			<p className="text-ink-muted">{report.summary}</p>
 			{report.strengths.length > 0 && (
 				<div>
-					<p className="text-sm font-medium text-emerald-700">Strengths</p>
-					<ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+					<p className="text-sm font-bold text-emerald-700">Strengths</p>
+					<ul className="list-disc space-y-1 pl-5 text-sm text-ink-muted">
 						{report.strengths.map((s) => (
 							<li key={s}>{s}</li>
 						))}
@@ -176,13 +192,13 @@ function ReportCard({ report }: { report: InterviewReport }) {
 			)}
 			{report.focusAreas.length > 0 && (
 				<div className="space-y-2">
-					<p className="text-sm font-medium text-amber-700">Focus areas</p>
+					<p className="text-sm font-bold text-amber-700">Focus areas</p>
 					{report.focusAreas.map((f) => (
-						<div key={f.competency} className="rounded-lg bg-slate-50 p-3 text-sm">
-							<p className="font-medium text-slate-900">{f.competency}</p>
-							<p className="text-slate-700">{f.why}</p>
-							<p className="mt-1 text-slate-600">
-								<span className="font-medium">Practice: </span>
+						<div key={f.competency} className={`${INSET} text-sm`}>
+							<p className="font-bold">{f.competency}</p>
+							<p className="text-ink-muted">{f.why}</p>
+							<p className="mt-1 text-ink-muted">
+								<span className="font-bold text-ink">Practice: </span>
 								{f.practice}
 							</p>
 						</div>
@@ -199,12 +215,12 @@ function StatusChip({ part }: { part: ToolPart }) {
 	const input = part.input as { query?: string; code?: string; path?: string } | undefined;
 	const detail = input?.query ?? input?.code ?? input?.path;
 	return (
-		<div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+		<div className={STATUS_CHIP}>
 			<span
 				className={`size-2 rounded-full ${failed ? 'bg-red-500' : done ? 'bg-emerald-500' : 'animate-pulse bg-amber-400'}`}
 			/>
 			{PREP_LABELS[getToolName(part)] ?? getToolName(part)}
-			{detail ? <code className="text-slate-500">{detail}</code> : null}
+			{detail ? <code className="font-normal text-ink-muted/80">{detail}</code> : null}
 		</div>
 	);
 }
@@ -220,10 +236,10 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 				e.preventDefault();
 				if (job.trim()) onStart({ kind: 'setup', job: job.trim(), count, focus });
 			}}
-			className="space-y-6"
+			className={`${CARD} space-y-6`}
 		>
 			<div className="space-y-2">
-				<label htmlFor="job" className="text-sm font-medium text-slate-900">
+				<label htmlFor="job" className="font-bold">
 					What job are you interviewing for?
 				</label>
 				<input
@@ -231,16 +247,11 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 					value={job}
 					onChange={(e) => setJob(e.target.value)}
 					placeholder="e.g. Registered Nurse"
-					className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-slate-500"
+					className={`${INPUT} w-full`}
 				/>
 				<div className="flex flex-wrap gap-2">
 					{JOB_SUGGESTIONS.map((s) => (
-						<button
-							key={s}
-							type="button"
-							onClick={() => setJob(s)}
-							className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-400"
-						>
+						<button key={s} type="button" onClick={() => setJob(s)} className={PILL}>
 							{s}
 						</button>
 					))}
@@ -248,7 +259,7 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 			</div>
 
 			<fieldset className="space-y-2">
-				<legend className="text-sm font-medium text-slate-900">Number of questions</legend>
+				<legend className="font-bold">Number of questions</legend>
 				<div className="flex gap-2">
 					{QUESTION_COUNTS.map((n) => (
 						<button
@@ -256,7 +267,7 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 							type="button"
 							onClick={() => setCount(n)}
 							aria-pressed={count === n}
-							className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white"
+							className="size-11 rounded-full border border-line bg-white font-display font-semibold text-ink-muted hover:border-accent aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white"
 						>
 							{n}
 						</button>
@@ -265,7 +276,7 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 			</fieldset>
 
 			<fieldset className="space-y-2">
-				<legend className="text-sm font-medium text-slate-900">Question style</legend>
+				<legend className="font-bold">Question style</legend>
 				<div className="grid gap-2 sm:grid-cols-3">
 					{FOCUS_OPTIONS.map((o) => (
 						<button
@@ -273,20 +284,16 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 							type="button"
 							onClick={() => setFocus(o.value)}
 							aria-pressed={focus === o.value}
-							className="rounded-xl border border-slate-300 p-3 text-left aria-pressed:border-slate-900 aria-pressed:ring-1 aria-pressed:ring-slate-900"
+							className={CHOICE}
 						>
-							<p className="text-sm font-medium text-slate-900">{o.label}</p>
-							<p className="text-xs text-slate-500">{o.hint}</p>
+							<p className="font-display font-semibold">{o.label}</p>
+							<p className="text-xs text-ink-muted">{o.hint}</p>
 						</button>
 					))}
 				</div>
 			</fieldset>
 
-			<button
-				type="submit"
-				disabled={disabled || !job.trim()}
-				className="rounded-xl bg-slate-900 px-5 py-2 text-white disabled:opacity-40"
-			>
+			<button type="submit" disabled={disabled || !job.trim()} className={PRIMARY_BUTTON}>
 				Start interview
 			</button>
 		</form>
@@ -328,71 +335,71 @@ export default function InterviewCoach() {
 	};
 
 	return (
-		<div className="mx-auto flex h-full max-w-3xl flex-col px-4">
+		<div className={PAGE}>
 			<header className="flex items-start justify-between gap-4 py-6">
 				<div>
-					<h1 className="text-2xl font-semibold text-slate-900">Mock Interview Coach</h1>
-					<p className="text-sm text-slate-500">
+					<h1 className={PAGE_TITLE}>Mock Interview Coach</h1>
+					<p className={PAGE_SUBTITLE}>
 						{setup
 							? `${setup.job} · ${setup.focus} · ${finished ? 'complete' : `question ${Math.min(answered + 1, setup.count)} of ${setup.count}`}`
 							: 'Practice answering questions for a real occupation, graded against O*NET skill levels.'}
 					</p>
 				</div>
 				{setup && (
-					<button
-						type="button"
-						onClick={restart}
-						className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-					>
+					<button type="button" onClick={restart} className={`${OUTLINE_BUTTON} shrink-0`}>
 						New interview
 					</button>
 				)}
 			</header>
 
 			{setup && (
-				<div className="mb-4 h-1.5 rounded-full bg-slate-100">
+				<div className="mb-4 h-1.5 rounded-full bg-line">
 					<div
-						className="h-full rounded-full bg-emerald-500 transition-all"
+						className="h-full rounded-full bg-accent transition-all"
 						style={{ width: `${(Math.min(answered, setup.count) / setup.count) * 100}%` }}
 					/>
 				</div>
 			)}
 
 			<section className="flex-1 space-y-6 overflow-y-auto pb-6">
-				{!setup && <SetupForm disabled={!verified || busy} onStart={start} />}
+				{!setup && (
+					<MotMessage>
+						<MotBubble>
+							<p>Let's rehearse. Tell me the job, and I'll ask questions built from what that occupation requires.</p>
+						</MotBubble>
+						<SetupForm disabled={!verified || busy} onStart={start} />
+					</MotMessage>
+				)}
 
 				{messages.map((message) => {
 					if (setupOf(message)) return null;
 					if (message.role === 'user') {
 						return (
-							<div key={message.id} className="flex justify-end">
-								<div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-slate-900 px-4 py-2 text-white">
-									{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
-								</div>
-							</div>
+							<UserMessage key={message.id}>
+								{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
+							</UserMessage>
 						);
 					}
-					return (
-						<div key={message.id} className="space-y-3 text-slate-800">
-							{message.parts.map((part, i) => {
-								if (part.type === 'text') return <MarkdownText key={i} text={part.text} />;
-								if (!isToolUIPart(part)) return null;
-								const score = toolOutput<InterviewScore>(part, 'scoreAnswer');
-								if (score) return <ScoreCard key={i} score={score} />;
-								const report = toolOutput<InterviewReport>(part, 'finishInterview');
-								if (report) return <ReportCard key={i} report={report} />;
-								return <StatusChip key={i} part={part} />;
-							})}
-						</div>
-					);
+					const parts = message.parts.flatMap((part, i) => {
+						if (part.type === 'text') {
+							return (
+								<MotBubble key={i}>
+									<MarkdownText text={part.text} />
+								</MotBubble>
+							);
+						}
+						if (!isToolUIPart(part)) return [];
+						const score = toolOutput<InterviewScore>(part, 'scoreAnswer');
+						if (score) return <ScoreCard key={i} score={score} />;
+						const report = toolOutput<InterviewReport>(part, 'finishInterview');
+						if (report) return <ReportCard key={i} report={report} />;
+						return <StatusChip key={i} part={part} />;
+					});
+					return parts.length ? <MotMessage key={message.id}>{parts}</MotMessage> : null;
 				})}
 
-				{status === 'submitted' && <p className="text-sm text-slate-400">Thinking…</p>}
-				{error && (
-					<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-						{error.message || 'Something went wrong.'}
-					</p>
-				)}
+				{status === 'submitted' && <ThinkingMessage />}
+				{error && <ErrorNote message={error.message} />}
 				<div ref={bottomRef} />
 			</section>
 
@@ -404,7 +411,7 @@ export default function InterviewCoach() {
 						e.preventDefault();
 						send(answer);
 					}}
-					className="flex items-end gap-2 border-t border-slate-200 py-4"
+					className="flex items-end gap-2 border-t border-line py-4"
 				>
 					<textarea
 						value={answer}
@@ -421,19 +428,15 @@ export default function InterviewCoach() {
 								? 'Ask for a sample answer, or retry a question…'
 								: 'Your answer: the situation, what you did, and the result. Shift+Enter for a new line.'
 						}
-						className="flex-1 resize-none rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-slate-500"
+						className={`${INPUT} flex-1 resize-none`}
 					/>
 					<div className="flex flex-col gap-2">
 						{busy ? (
-							<button type="button" onClick={stop} className="rounded-xl bg-slate-200 px-4 py-2 text-slate-700">
+							<button type="button" onClick={stop} className={STOP_BUTTON}>
 								Stop
 							</button>
 						) : (
-							<button
-								type="submit"
-								disabled={!answer.trim() || !verified}
-								className="rounded-xl bg-slate-900 px-4 py-2 text-white disabled:opacity-40"
-							>
+							<button type="submit" disabled={!answer.trim() || !verified} className={PRIMARY_BUTTON}>
 								Send
 							</button>
 						)}
@@ -442,7 +445,7 @@ export default function InterviewCoach() {
 								type="button"
 								onClick={() => send('Please end the interview now and give me my report.')}
 								disabled={!verified}
-								className="rounded-xl px-4 py-1 text-xs text-slate-500 hover:text-slate-800 disabled:opacity-40"
+								className="rounded-full px-4 py-1 text-xs font-semibold text-ink-muted hover:text-accent disabled:opacity-40"
 							>
 								End early
 							</button>

@@ -2,6 +2,22 @@ import { getToolName, isToolUIPart, lastAssistantMessageIsCompleteWithToolCalls,
 import { useEffect, useRef, useState } from 'react';
 import HumanCheck from './HumanCheck';
 import MarkdownText from './chat/MarkdownText';
+import { ErrorNote, MotBubble, MotMessage, ThinkingMessage, UserMessage } from './chat/Messages';
+import {
+	CARD,
+	CHOICE,
+	EYEBROW,
+	INPUT,
+	INSET,
+	OUTLINE_BUTTON,
+	PAGE,
+	PAGE_SUBTITLE,
+	PAGE_TITLE,
+	PILL,
+	PRIMARY_BUTTON,
+	STATUS_CHIP,
+	STOP_BUTTON,
+} from './chat/styles';
 import { useVerifiedChat } from './chat/useVerifiedChat';
 
 /** Mirror the tool inputs/outputs in ../../agent/src/quiz-agent.ts and ../../agent/src/onet/interests.ts. */
@@ -49,7 +65,7 @@ const PREPARATION: { value: number | null; label: string; hint: string }[] = [
 const RATING_OPTIONS: { value: Rating; label: string; className: string }[] = [
 	{ value: 'strongly-dislike', label: 'Strongly dislike', className: 'aria-pressed:border-rose-600 aria-pressed:bg-rose-600' },
 	{ value: 'dislike', label: 'Dislike', className: 'aria-pressed:border-rose-400 aria-pressed:bg-rose-400' },
-	{ value: 'unsure', label: 'Unsure', className: 'aria-pressed:border-slate-500 aria-pressed:bg-slate-500' },
+	{ value: 'unsure', label: 'Unsure', className: 'aria-pressed:border-ink-muted aria-pressed:bg-ink-muted' },
 	{ value: 'like', label: 'Like', className: 'aria-pressed:border-emerald-500 aria-pressed:bg-emerald-500' },
 	{ value: 'strongly-like', label: 'Strongly like', className: 'aria-pressed:border-emerald-700 aria-pressed:bg-emerald-700' },
 ];
@@ -87,12 +103,12 @@ function StatusChip({ part }: { part: ToolPart }) {
 	const input = part.input as { query?: string; code?: string } | undefined;
 	const detail = input?.query ?? input?.code;
 	return (
-		<div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+		<div className={STATUS_CHIP}>
 			<span
 				className={`size-2 rounded-full ${failed ? 'bg-red-500' : done ? 'bg-emerald-500' : 'animate-pulse bg-amber-400'}`}
 			/>
 			{STATUS_LABELS[getToolName(part)] ?? getToolName(part)}
-			{detail ? <code className="text-slate-500">{detail}</code> : null}
+			{detail ? <code className="font-normal text-ink-muted/80">{detail}</code> : null}
 		</div>
 	);
 }
@@ -112,25 +128,25 @@ function ActivityCard({
 	const rated = activities.filter((a) => ratings[a.id]).length;
 
 	return (
-		<div className="space-y-4 rounded-2xl border border-slate-300 p-5">
+		<div className={`${CARD} space-y-4`}>
 			<div className="flex items-baseline justify-between gap-2">
-				<p className="font-medium text-slate-900">{input.intro}</p>
-				<p className="shrink-0 text-xs text-slate-500">
+				<p className="font-display text-lg font-semibold">{input.intro}</p>
+				<p className="shrink-0 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-accent">
 					{rated} / {activities.length} rated
 				</p>
 			</div>
-			<ul className="divide-y divide-slate-100">
+			<ul className="divide-y divide-line">
 				{activities.map((activity) => (
-					<li key={activity.id} className="space-y-1.5 py-2.5">
-						<p className="text-sm text-slate-800">{activity.text}</p>
-						<div className="grid grid-cols-5 gap-1" role="group" aria-label={activity.text}>
+					<li key={activity.id} className="space-y-2 py-3">
+						<p className="text-sm">{activity.text}</p>
+						<div className="grid grid-cols-5 gap-1.5" role="group" aria-label={activity.text}>
 							{RATING_OPTIONS.map((option) => (
 								<button
 									key={option.value}
 									type="button"
 									aria-pressed={ratings[activity.id] === option.value}
 									onClick={() => setRatings((r) => ({ ...r, [activity.id]: option.value }))}
-									className={`rounded-lg border border-slate-300 px-1 py-1 text-xs text-slate-700 aria-pressed:text-white ${option.className}`}
+									className={`rounded-full border border-line bg-white px-1 py-1.5 text-xs font-semibold text-ink-muted hover:border-accent aria-pressed:text-white ${option.className}`}
 								>
 									{option.label}
 								</button>
@@ -146,7 +162,7 @@ function ActivityCard({
 					onClick={() =>
 						onSubmit({ ratings: activities.map((a) => ({ id: a.id, rating: ratings[a.id] })) })
 					}
-					className="rounded-xl bg-slate-900 px-5 py-2 text-white disabled:opacity-40"
+					className={PRIMARY_BUTTON}
 				>
 					Submit ratings
 				</button>
@@ -156,7 +172,7 @@ function ActivityCard({
 					onClick={() =>
 						setRatings((r) => ({ ...Object.fromEntries(activities.map((a) => [a.id, 'unsure' as const])), ...r }))
 					}
-					className="text-xs text-slate-500 hover:text-slate-800 disabled:opacity-40"
+					className="text-xs font-semibold text-ink-muted hover:text-accent disabled:opacity-40"
 				>
 					Mark the rest “Unsure”
 				</button>
@@ -168,7 +184,7 @@ function ActivityCard({
 function RatedSummary({ output }: { output: RatingsOutput }) {
 	const count = (...values: Rating[]) => output.ratings.filter((x) => values.includes(x.rating)).length;
 	return (
-		<p className="text-sm text-slate-500">
+		<p className="text-sm text-ink-muted">
 			Rated {output.ratings.length} activities: {count('like', 'strongly-like')} liked, {count('unsure')} unsure,{' '}
 			{count('dislike', 'strongly-dislike')} disliked.
 		</p>
@@ -178,19 +194,19 @@ function RatedSummary({ output }: { output: RatingsOutput }) {
 function ProfileCard({ profile }: { profile: InterestProfile }) {
 	const top = profile.types.slice(0, 3);
 	return (
-		<div className="space-y-4 rounded-2xl border border-slate-300 p-5">
+		<div className={`${CARD} space-y-4`}>
 			<div className="flex flex-wrap items-end justify-between gap-2">
 				<div>
-					<p className="text-xs uppercase tracking-wide text-slate-500">Your interest code</p>
-					<p className="flex gap-1 text-3xl font-semibold">
+					<p className={EYEBROW}>Your interest code</p>
+					<p className="flex gap-1 font-display text-3xl font-semibold">
 						{profile.hollandCode.split('').map((c) => (
-							<span key={c} className={`rounded-md px-2 text-white ${TYPE_COLORS[c] ?? 'bg-slate-700'}`}>
+							<span key={c} className={`rounded-lg px-2 text-white ${TYPE_COLORS[c] ?? 'bg-ink'}`}>
 								{c}
 							</span>
 						))}
 					</p>
 				</div>
-				<p className="text-xs text-slate-500">
+				<p className="text-xs text-ink-muted">
 					{top.map((t) => t.name).join(' · ')} · from {profile.ratedActivities} ratings
 				</p>
 			</div>
@@ -198,27 +214,27 @@ function ProfileCard({ profile }: { profile: InterestProfile }) {
 			<div className="space-y-2">
 				{profile.types.map((t) => (
 					<div key={t.code} className="grid grid-cols-[7rem_1fr_2.5rem] items-center gap-3 text-sm">
-						<span className="text-slate-700">{t.name}</span>
-						<div className="h-2.5 rounded-full bg-slate-100">
+						<span className="text-ink-muted">{t.name}</span>
+						<div className="h-2.5 rounded-full bg-canvas">
 							<div
-								className={`h-full rounded-full ${TYPE_COLORS[t.code] ?? 'bg-slate-700'}`}
+								className={`h-full rounded-full ${TYPE_COLORS[t.code] ?? 'bg-ink'}`}
 								style={{ width: `${((t.score - 1) / 6) * 100}%` }}
 							/>
 						</div>
-						<span className="text-right text-xs text-slate-500">{t.score.toFixed(1)}</span>
+						<span className="text-right text-xs text-ink-muted">{t.score.toFixed(1)}</span>
 					</div>
 				))}
-				<p className="text-xs text-slate-400">O*NET interest scale, 1–7</p>
+				<p className="text-xs text-ink-muted/80">O*NET interest scale, 1–7</p>
 			</div>
 
 			<div className="grid gap-3 sm:grid-cols-3">
 				{top.map((t) => (
-					<div key={t.code} className="rounded-lg bg-slate-50 p-3 text-sm">
-						<p className="font-medium text-slate-900">{t.name}</p>
-						{t.description && <p className="mt-1 text-xs text-slate-600">{t.description}</p>}
+					<div key={t.code} className={`${INSET} text-sm`}>
+						<p className="font-display font-semibold">{t.name}</p>
+						{t.description && <p className="mt-1 text-xs text-ink-muted">{t.description}</p>}
 						<div className="mt-2 flex flex-wrap gap-1">
 							{t.keywords.map((k) => (
-								<span key={k} className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-600 ring-1 ring-slate-200">
+								<span key={k} className="rounded-full bg-white px-2 py-0.5 text-xs text-ink-muted ring-1 ring-line">
 									{k}
 								</span>
 							))}
@@ -229,12 +245,12 @@ function ProfileCard({ profile }: { profile: InterestProfile }) {
 
 			{profile.likedAreas.length > 0 && (
 				<div className="text-sm">
-					<p className="font-medium text-emerald-700">Areas you liked</p>
+					<p className="font-bold text-emerald-700">Areas you liked</p>
 					<div className="mt-1 flex flex-wrap gap-1">
 						{profile.likedAreas.map((a) => (
 							<span
 								key={a.name}
-								className={`rounded-full px-2.5 py-0.5 text-xs ${a.score >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}
+								className={`rounded-full px-2.5 py-0.5 text-xs ${a.score >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-canvas text-ink-muted'}`}
 							>
 								{a.name}
 							</span>
@@ -248,35 +264,32 @@ function ProfileCard({ profile }: { profile: InterestProfile }) {
 
 function MatchList({ result }: { result: OccupationMatches }) {
 	if (!result.matches.length) {
-		return <p className="text-sm text-slate-500">No matching occupations at this preparation level.</p>;
+		return <p className="text-sm text-ink-muted">No matching occupations at this preparation level.</p>;
 	}
 	return (
-		<div className="space-y-2 rounded-2xl border border-slate-300 p-5">
-			<p className="text-xs uppercase tracking-wide text-slate-500">
+		<div className={`${CARD} space-y-2`}>
+			<p className={EYEBROW}>
 				Best-fit occupations{result.maxJobZone ? ` · Job Zone ${result.maxJobZone} or below` : ''}
 			</p>
-			<ol className="divide-y divide-slate-100">
+			<ol className="divide-y divide-line">
 				{result.matches.map((m) => (
 					<li key={m.code} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5">
 						<span
-							className={`w-11 text-sm font-semibold ${m.matchPercent >= 85 ? 'text-emerald-700' : m.matchPercent >= 70 ? 'text-amber-700' : 'text-slate-500'}`}
+							className={`w-11 font-display text-sm font-semibold ${m.matchPercent >= 85 ? 'text-emerald-700' : m.matchPercent >= 70 ? 'text-amber-700' : 'text-ink-muted'}`}
 						>
 							{m.matchPercent}%
 						</span>
 						<div className="min-w-0 flex-1">
-							<a href={m.url} target="_blank" rel="noreferrer" className="font-medium text-slate-900 hover:underline">
+							<a href={m.url} target="_blank" rel="noreferrer" className="font-bold text-ink hover:text-accent hover:underline">
 								{m.title}
 							</a>
-							<p className="text-xs text-slate-500">
+							<p className="text-xs text-ink-muted">
 								{[m.interestCode && `Interest code ${m.interestCode}`, m.jobZone && `Job Zone ${m.jobZone}`, ...m.matchingAreas]
 									.filter(Boolean)
 									.join(' · ')}
 							</p>
 						</div>
-						<a
-							href={`/interview?job=${encodeURIComponent(m.title)}`}
-							className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:border-slate-400"
-						>
+						<a href={`/interview?job=${encodeURIComponent(m.title)}`} className={`${PILL} shrink-0`}>
 							Practice interview
 						</a>
 					</li>
@@ -295,18 +308,11 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 				e.preventDefault();
 				onStart({ kind: 'setup', maxJobZone });
 			}}
-			className="space-y-6"
+			className={`${CARD} space-y-6`}
 		>
-			<div className="space-y-2 text-sm text-slate-600">
-				<p>
-					Rate about 35 everyday work activities by whether you'd <em>enjoy</em> them, not whether you have the
-					experience. Your answers become a RIASEC interest profile, matched against how O*NET rates every occupation.
-				</p>
-			</div>
-
 			<fieldset className="space-y-2" aria-describedby="preparation-help">
-				<legend className="text-sm font-medium text-slate-900">How much preparation are you open to?</legend>
-				<div id="preparation-help" className="space-y-1 text-xs text-slate-500">
+				<legend className="font-bold">How much preparation are you open to?</legend>
+				<div id="preparation-help" className="space-y-1 text-xs text-ink-muted">
 					<p>
 						Pick the most school or training you'd be willing to complete for the right career, not what you have
 						today. Careers that usually need more than that are left out of your matches. Your activity ratings are
@@ -324,16 +330,16 @@ function SetupForm({ disabled, onStart }: { disabled: boolean; onStart: (setup: 
 							type="button"
 							onClick={() => setMaxJobZone(o.value)}
 							aria-pressed={maxJobZone === o.value}
-							className="rounded-xl border border-slate-300 p-3 text-left aria-pressed:border-slate-900 aria-pressed:ring-1 aria-pressed:ring-slate-900"
+							className={CHOICE}
 						>
-							<p className="text-sm font-medium text-slate-900">{o.label}</p>
-							<p className="text-xs text-slate-500">{o.hint}</p>
+							<p className="font-display font-semibold">{o.label}</p>
+							<p className="text-xs text-ink-muted">{o.hint}</p>
 						</button>
 					))}
 				</div>
 			</fieldset>
 
-			<button type="submit" disabled={disabled} className="rounded-xl bg-slate-900 px-5 py-2 text-white disabled:opacity-40">
+			<button type="submit" disabled={disabled} className={PRIMARY_BUTTON}>
 				Start quiz
 			</button>
 		</form>
@@ -385,84 +391,90 @@ export default function InterestQuiz() {
 		setQuestion('');
 	};
 
+	const renderPart = (part: UIMessage['parts'][number], i: number) => {
+		if (part.type === 'text') {
+			return (
+				<MotBubble key={i}>
+					<MarkdownText text={part.text} />
+				</MotBubble>
+			);
+		}
+		if (!isToolUIPart(part)) return null;
+		const name = getToolName(part);
+
+		if (name === 'getQuizActivities' && part.state === 'output-available') return null;
+		if (name === 'presentActivities') {
+			if (part.state === 'output-available') {
+				return <RatedSummary key={i} output={part.output as RatingsOutput} />;
+			}
+			if (part.state !== 'input-available') return null;
+			const input = part.input as PresentInput;
+			const set = activitySets.get(input.round);
+			if (!set) return <StatusChip key={i} part={part} />;
+			return (
+				<ActivityCard
+					key={part.toolCallId}
+					input={input}
+					activities={set.activities}
+					disabled={busy || !verified}
+					onSubmit={(output) => addToolOutput({ tool: 'presentActivities', toolCallId: part.toolCallId, output })}
+				/>
+			);
+		}
+		const profile = toolOutput<InterestProfile>(part, 'buildInterestProfile');
+		if (profile?.types) return <ProfileCard key={i} profile={profile} />;
+		const matches = toolOutput<OccupationMatches>(part, 'matchOccupations');
+		if (matches?.matches) return <MatchList key={i} result={matches} />;
+		return <StatusChip key={i} part={part} />;
+	};
+
 	return (
-		<div className="mx-auto flex h-full max-w-3xl flex-col px-4">
+		<div className={PAGE}>
 			<header className="flex items-start justify-between gap-4 py-6">
 				<div>
-					<h1 className="text-2xl font-semibold text-slate-900">Interest Quiz</h1>
-					<p className="text-sm text-slate-500">
+					<h1 className={PAGE_TITLE}>Interest Quiz</h1>
+					<p className={PAGE_SUBTITLE}>
 						{setup
 							? `${step} · ${setup.maxJobZone ? `Job Zone ${setup.maxJobZone} or below` : 'any preparation level'}`
 							: 'Find occupations that fit what you enjoy, using the O*NET RIASEC interest model.'}
 					</p>
 				</div>
 				{setup && (
-					<button
-						type="button"
-						onClick={restart}
-						className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-					>
+					<button type="button" onClick={restart} className={`${OUTLINE_BUTTON} shrink-0`}>
 						Retake quiz
 					</button>
 				)}
 			</header>
 
 			<section className="flex-1 space-y-6 overflow-y-auto pb-6">
-				{!setup && <SetupForm disabled={!verified || busy} onStart={start} />}
+				{!setup && (
+					<MotMessage>
+						<MotBubble>
+							<p>
+								Rate about 35 everyday work activities by whether you'd <em>enjoy</em> them, not whether you have the
+								experience. Your answers become a RIASEC interest profile, matched against how O*NET rates every
+								occupation.
+							</p>
+						</MotBubble>
+						<SetupForm disabled={!verified || busy} onStart={start} />
+					</MotMessage>
+				)}
 
 				{messages.map((message) => {
 					if (setupOf(message)) return null;
 					if (message.role === 'user') {
 						return (
-							<div key={message.id} className="flex justify-end">
-								<div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-slate-900 px-4 py-2 text-white">
-									{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
-								</div>
-							</div>
+							<UserMessage key={message.id}>
+								{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
+							</UserMessage>
 						);
 					}
-					return (
-						<div key={message.id} className="space-y-3 text-slate-800">
-							{message.parts.map((part, i) => {
-								if (part.type === 'text') return <MarkdownText key={i} text={part.text} />;
-								if (!isToolUIPart(part)) return null;
-								const name = getToolName(part);
-
-								if (name === 'getQuizActivities' && part.state === 'output-available') return null;
-								if (name === 'presentActivities') {
-									if (part.state === 'output-available') {
-										return <RatedSummary key={i} output={part.output as RatingsOutput} />;
-									}
-									if (part.state !== 'input-available') return null;
-									const input = part.input as PresentInput;
-									const set = activitySets.get(input.round);
-									if (!set) return <StatusChip key={i} part={part} />;
-									return (
-										<ActivityCard
-											key={part.toolCallId}
-											input={input}
-											activities={set.activities}
-											disabled={busy || !verified}
-											onSubmit={(output) =>
-												addToolOutput({ tool: 'presentActivities', toolCallId: part.toolCallId, output })
-											}
-										/>
-									);
-								}
-								const profile = toolOutput<InterestProfile>(part, 'buildInterestProfile');
-								if (profile?.types) return <ProfileCard key={i} profile={profile} />;
-								const matches = toolOutput<OccupationMatches>(part, 'matchOccupations');
-								if (matches?.matches) return <MatchList key={i} result={matches} />;
-								return <StatusChip key={i} part={part} />;
-							})}
-						</div>
-					);
+					const parts = message.parts.map(renderPart).filter(Boolean);
+					return parts.length ? <MotMessage key={message.id}>{parts}</MotMessage> : null;
 				})}
 
-				{status === 'submitted' && <p className="text-sm text-slate-400">Thinking…</p>}
-				{error && (
-					<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error.message || 'Something went wrong.'}</p>
-				)}
+				{status === 'submitted' && <ThinkingMessage />}
+				{error && <ErrorNote message={error.message} />}
 				<div ref={bottomRef} />
 			</section>
 
@@ -474,24 +486,20 @@ export default function InterestQuiz() {
 						e.preventDefault();
 						send(question);
 					}}
-					className="flex items-end gap-2 border-t border-slate-200 py-4"
+					className="flex items-end gap-2 border-t border-line py-4"
 				>
 					<input
 						value={question}
 						onChange={(e) => setQuestion(e.target.value)}
 						placeholder="Ask about a match, or try “show jobs with less training”…"
-						className="flex-1 rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-slate-500"
+						className={`${INPUT} min-h-11 flex-1`}
 					/>
 					{busy ? (
-						<button type="button" onClick={stop} className="rounded-xl bg-slate-200 px-4 py-2 text-slate-700">
+						<button type="button" onClick={stop} className={STOP_BUTTON}>
 							Stop
 						</button>
 					) : (
-						<button
-							type="submit"
-							disabled={!question.trim() || !verified}
-							className="rounded-xl bg-slate-900 px-4 py-2 text-white disabled:opacity-40"
-						>
+						<button type="submit" disabled={!question.trim() || !verified} className={PRIMARY_BUTTON}>
 							Send
 						</button>
 					)}

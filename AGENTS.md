@@ -18,8 +18,9 @@ Type-check with `npx astro check`. There is no test suite or lint script.
 
 ## Layout
 
-- `src/pages/index.astro` is the static introduction page (plain Astro, no client JS). Its `features` list describes each tool and the O\*NET data it uses; update it when a tool's behavior changes.
-- `src/pages/explore.astro` mounts `CareerChat`, `src/pages/interview.astro` mounts `InterviewCoach`, and `src/pages/quiz.astro` mounts `InterestQuiz`, all with `client:only="react"` inside `layouts/AppLayout.astro` (page shell and nav). There is no SSR of the chat UIs. Add new tools to the `links` list in `AppLayout.astro`.
+- `src/pages/index.astro` is the static homepage (plain Astro, no client JS), where Mot, the site's mascot, introduces O\*NET and links to each tool. Its `features` list holds each tool's one-line pitch; update it when a tool's behavior changes.
+- `src/pages/explore.astro` mounts `CareerChat`, `src/pages/interview.astro` mounts `InterviewCoach`, and `src/pages/quiz.astro` mounts `InterestQuiz`, all with `client:only="react"` inside `layouts/AppLayout.astro` (page shell, Mot logo, and nav). There is no SSR of the chat UIs. Add new tools to the `links` list in `AppLayout.astro`.
+- `src/components/MotAvatar.tsx` is the mascot avatar, used by both Astro pages and the React components. `src/components/chat/Messages.tsx` has the shared `MotMessage`, `MotBubble`, and `UserMessage` chat layout, and `src/components/chat/styles.ts` holds the shared class strings for cards, inputs, and buttons.
 - `src/components/chat/useVerifiedChat.ts` wraps `useChat` from `@ai-sdk/react` with a `DefaultChatTransport` for a given API route plus the human-session state. Every page uses it; extra `useChat` options (like `sendAutomaticallyWhen`) go in its second argument.
 - `src/components/CareerChat.tsx` renders text parts with `chat/MarkdownText.tsx` and tool-call parts as chips.
 - `src/components/InterviewCoach.tsx` renders a setup form, then renders `scoreAnswer` and `finishInterview` tool outputs as feedback and report cards. It prefills the job from `?job=`.
@@ -40,7 +41,7 @@ Type-check with `npx astro check`. There is no test suite or lint script.
 - **Interview card types mirror the agent.** `InterviewScore` and `InterviewReport` in `InterviewCoach.tsx` must match the `scoreAnswer` and `finishInterview` schemas in `../agent/src/interview-agent.ts`. Likewise, the types at the top of `InterestQuiz.tsx` mirror the quiz tools in `../agent/src/quiz-agent.ts` and `../agent/src/onet/interests.ts`.
 - **New `client:only` components in dev:** Tailwind may not pick up classes from a brand-new client-only component until the dev server restarts (or `src/styles/global.css` is touched). Production builds are unaffected.
 - **Adapter is chosen at build time**: `@astrojs/vercel` when `VERCEL` is set, otherwise `@astrojs/node` in standalone mode. Keep server code compatible with both (Node APIs like `node:crypto` are fine).
-- **Styling is Tailwind 4 utilities inline** in components. `src/styles/global.css` only imports Tailwind. There's no Tailwind config file; use `@theme` in `global.css` if design tokens are needed.
+- **Styling is Tailwind 4 utilities inline** in components. `src/styles/global.css` defines the design tokens in `@theme` (colors `canvas`, `ink`, `ink-muted`, `line`, `accent`, `accent-strong`, `accent-soft`; fonts `font-sans` for Nunito Sans and `font-display` for Outfit; `rounded-blob`; `shadow-bubble`) plus base body and link styles. Use the tokens instead of raw Tailwind palette colors, except for semantic status colors (red, amber, emerald) and the RIASEC type colors. Fonts load from Google Fonts in `AppLayout.astro`. There's no Tailwind config file.
 - Code style: tabs, single quotes, semicolons.
 
 ## Agent skills

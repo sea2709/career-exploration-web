@@ -83,7 +83,7 @@ export default function HumanCheck({ onVerified }: { onVerified: (expiresAt: num
 	return (
 		<div className="flex flex-col items-center gap-2 pt-4 text-sm">
 			<div ref={containerRef} />
-			<p className={error ? 'text-red-700' : 'text-slate-500'}>{error ?? 'Checking that you’re human…'}</p>
+			<p className={error ? 'text-red-700' : 'text-ink-muted'}>{error ?? 'Checking that you’re human…'}</p>
 		</div>
 	);
 }
