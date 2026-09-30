@@ -49,6 +49,15 @@ export type CoachingGuide = {
   }>
 }
 
+export type OnetOccupationMetadataItem = {
+  _type: 'onetOccupationMetadataItem'
+  item?: string
+  response?: string
+  n?: number
+  percent?: number
+  dateUpdated?: string
+}
+
 export type OnetInterestReference = {
   _ref: string
   _type: 'reference'
@@ -108,6 +117,7 @@ export type OnetRatingItem = {
     | 'abilities'
     | 'workActivities'
     | 'education'
+    | 'trainingExperience'
     | 'workContext'
   element?: OnetContentModelElementReference
   scale?: OnetScaleReference
@@ -140,11 +150,49 @@ export type OnetSoftwareSkillItem = {
   inDemand?: 'Y' | 'N'
 }
 
+export type OnetReportedTitleItem = {
+  _type: 'onetReportedTitleItem'
+  reportedJobTitle?: string
+  shownInMyNextMove?: 'Y' | 'N'
+}
+
 export type OnetJobTitleItem = {
   _type: 'onetJobTitleItem'
   jobTitle?: string
   shortTitle?: string
   sources?: string
+}
+
+export type OnetEmergingTaskItem = {
+  _type: 'onetEmergingTaskItem'
+  task?: string
+  category?: 'New' | 'Revision'
+  originalTaskId?: number
+  originalTask?: string
+  dateUpdated?: string
+  domainSource?: string
+}
+
+export type OnetTaskDwaItem = {
+  _type: 'onetTaskDwaItem'
+  dwa?: OnetContentModelElementReference
+  dateUpdated?: string
+  domainSource?: string
+}
+
+export type OnetTaskRatingItem = {
+  _type: 'onetTaskRatingItem'
+  scale?: OnetScaleReference
+  ratingCategory?: OnetRatingCategoryReference
+  dataValue?: number
+  n?: number
+  standardError?: number
+  lowerCiBound?: number
+  upperCiBound?: number
+  recommendSuppress?: 'Y' | 'N'
+  notRelevant?: 'Y' | 'N'
+  dateUpdated?: string
+  domainSource?: string
 }
 
 export type OnetTaskItem = {
@@ -155,6 +203,16 @@ export type OnetTaskItem = {
   incumbentsResponding?: number
   dateUpdated?: string
   domainSource?: string
+  ratings?: Array<
+    {
+      _key: string
+    } & OnetTaskRatingItem
+  >
+  dwas?: Array<
+    {
+      _key: string
+    } & OnetTaskDwaItem
+  >
 }
 
 export type OnetJobZoneReference = {
@@ -180,10 +238,20 @@ export type OnetOccupation = {
       _key: string
     } & OnetTaskItem
   >
+  emergingTasks?: Array<
+    {
+      _key: string
+    } & OnetEmergingTaskItem
+  >
   jobTitles?: Array<
     {
       _key: string
     } & OnetJobTitleItem
+  >
+  reportedTitles?: Array<
+    {
+      _key: string
+    } & OnetReportedTitleItem
   >
   softwareSkills?: Array<
     {
@@ -221,6 +289,17 @@ export type OnetOccupation = {
       } & OnetInterestAreaScore
     >
   }
+  surveyMetadata?: Array<
+    {
+      _key: string
+    } & OnetOccupationMetadataItem
+  >
+}
+
+export type OnetSurveyItem = {
+  _type: 'onetSurveyItem'
+  surveyItemNumber?: string
+  scale?: OnetScaleReference
 }
 
 export type OnetInterest = {
@@ -275,7 +354,7 @@ export type OnetRatingCategory = {
   _updatedAt: string
   _rev: string
   importKey?: string
-  categoryDomain?: 'education' | 'workContext'
+  categoryDomain?: 'education' | 'trainingExperience' | 'workContext' | 'task'
   element?: OnetContentModelElementReference
   scale?: OnetScaleReference
   category?: number
@@ -321,6 +400,22 @@ export type OnetContentModelElement = {
   elementId?: string
   elementName?: string
   description?: string
+  parentElement?: OnetContentModelElementReference
+  relatedWorkActivities?: Array<
+    {
+      _key: string
+    } & OnetContentModelElementReference
+  >
+  relatedWorkContext?: Array<
+    {
+      _key: string
+    } & OnetContentModelElementReference
+  >
+  surveyItems?: Array<
+    {
+      _key: string
+    } & OnetSurveyItem
+  >
 }
 
 export type SanityAgentContext = {
@@ -457,6 +552,7 @@ export type Geopoint = {
 
 export type AllSanitySchemaTypes =
   | CoachingGuide
+  | OnetOccupationMetadataItem
   | OnetInterestReference
   | OnetInterestAreaScore
   | OnetOccupationReference
@@ -467,10 +563,15 @@ export type AllSanitySchemaTypes =
   | OnetRatingItem
   | OnetWorkStyleItem
   | OnetSoftwareSkillItem
+  | OnetReportedTitleItem
   | OnetJobTitleItem
+  | OnetEmergingTaskItem
+  | OnetTaskDwaItem
+  | OnetTaskRatingItem
   | OnetTaskItem
   | OnetJobZoneReference
   | OnetOccupation
+  | OnetSurveyItem
   | OnetInterest
   | OnetLevelScaleAnchor
   | OnetRatingCategory

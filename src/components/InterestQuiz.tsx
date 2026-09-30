@@ -6,7 +6,7 @@ import { useVerifiedChat } from './chat/useVerifiedChat';
 
 /** Mirror the tool inputs/outputs in ../../agent/src/quiz-agent.ts and ../../agent/src/onet/interests.ts. */
 type Round = 'broad' | 'focused';
-type Rating = 'like' | 'unsure' | 'dislike';
+type Rating = 'strongly-dislike' | 'dislike' | 'unsure' | 'like' | 'strongly-like';
 
 type QuizActivities = { round: Round; focusTypes?: string[]; activities: { id: string; text: string }[] };
 
@@ -47,9 +47,11 @@ const PREPARATION: { value: number | null; label: string; hint: string }[] = [
 ];
 
 const RATING_OPTIONS: { value: Rating; label: string; className: string }[] = [
-	{ value: 'like', label: 'Like', className: 'aria-pressed:border-emerald-600 aria-pressed:bg-emerald-600' },
-	{ value: 'unsure', label: 'Not sure', className: 'aria-pressed:border-slate-500 aria-pressed:bg-slate-500' },
-	{ value: 'dislike', label: 'Dislike', className: 'aria-pressed:border-rose-500 aria-pressed:bg-rose-500' },
+	{ value: 'strongly-dislike', label: 'Strongly dislike', className: 'aria-pressed:border-rose-600 aria-pressed:bg-rose-600' },
+	{ value: 'dislike', label: 'Dislike', className: 'aria-pressed:border-rose-400 aria-pressed:bg-rose-400' },
+	{ value: 'unsure', label: 'Unsure', className: 'aria-pressed:border-slate-500 aria-pressed:bg-slate-500' },
+	{ value: 'like', label: 'Like', className: 'aria-pressed:border-emerald-500 aria-pressed:bg-emerald-500' },
+	{ value: 'strongly-like', label: 'Strongly like', className: 'aria-pressed:border-emerald-700 aria-pressed:bg-emerald-700' },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
@@ -119,16 +121,16 @@ function ActivityCard({
 			</div>
 			<ul className="divide-y divide-slate-100">
 				{activities.map((activity) => (
-					<li key={activity.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-						<span className="text-sm text-slate-800">{activity.text}</span>
-						<div className="flex gap-1" role="group" aria-label={activity.text}>
+					<li key={activity.id} className="space-y-1.5 py-2.5">
+						<p className="text-sm text-slate-800">{activity.text}</p>
+						<div className="grid grid-cols-5 gap-1" role="group" aria-label={activity.text}>
 							{RATING_OPTIONS.map((option) => (
 								<button
 									key={option.value}
 									type="button"
 									aria-pressed={ratings[activity.id] === option.value}
 									onClick={() => setRatings((r) => ({ ...r, [activity.id]: option.value }))}
-									className={`rounded-lg border border-slate-300 px-2.5 py-1 text-xs text-slate-700 aria-pressed:text-white ${option.className}`}
+									className={`rounded-lg border border-slate-300 px-1 py-1 text-xs text-slate-700 aria-pressed:text-white ${option.className}`}
 								>
 									{option.label}
 								</button>
@@ -156,7 +158,7 @@ function ActivityCard({
 					}
 					className="text-xs text-slate-500 hover:text-slate-800 disabled:opacity-40"
 				>
-					Mark the rest “Not sure”
+					Mark the rest “Unsure”
 				</button>
 			</div>
 		</div>
@@ -164,11 +166,11 @@ function ActivityCard({
 }
 
 function RatedSummary({ output }: { output: RatingsOutput }) {
-	const count = (r: Rating) => output.ratings.filter((x) => x.rating === r).length;
+	const count = (...values: Rating[]) => output.ratings.filter((x) => values.includes(x.rating)).length;
 	return (
 		<p className="text-sm text-slate-500">
-			Rated {output.ratings.length} activities: {count('like')} liked, {count('unsure')} not sure, {count('dislike')}{' '}
-			disliked.
+			Rated {output.ratings.length} activities: {count('like', 'strongly-like')} liked, {count('unsure')} unsure,{' '}
+			{count('dislike', 'strongly-dislike')} disliked.
 		</p>
 	);
 }
