@@ -37,9 +37,6 @@
     "tailwindcss": "^4.2.1",
     "vite": "^8.0.13"
   },
-  "allowScripts": {
-    "esbuild": true
-  },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "typescript": "^6.0.3"
