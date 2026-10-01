@@ -1,6 +1,7 @@
 import { getToolName, isToolUIPart, lastAssistantMessageIsCompleteWithToolCalls, type UIMessage } from 'ai';
 import { useEffect, useRef, useState } from 'react';
 import HumanCheck from './HumanCheck';
+import OtherCareerQuizzes from './OtherCareerQuizzes';
 import MarkdownText from './chat/MarkdownText';
 import { ErrorNote, MotBubble, MotMessage, ThinkingMessage, UserMessage } from './chat/Messages';
 import {
@@ -116,11 +117,13 @@ function StatusChip({ part }: { part: ToolPart }) {
 function ActivityCard({
 	input,
 	activities,
+	firstNumber,
 	disabled,
 	onSubmit,
 }: {
 	input: PresentInput;
 	activities: QuizActivities['activities'];
+	firstNumber: number;
 	disabled: boolean;
 	onSubmit: (output: RatingsOutput) => void;
 }) {
@@ -135,11 +138,23 @@ function ActivityCard({
 					{rated} / {activities.length} rated
 				</p>
 			</div>
-			<ul className="divide-y divide-line">
-				{activities.map((activity) => (
+			<ol className="divide-y divide-line" start={firstNumber}>
+				{activities.map((activity, index) => (
 					<li key={activity.id} className="space-y-2 py-3">
-						<p className="text-sm">{activity.text}</p>
-						<div className="grid grid-cols-5 gap-1.5" role="group" aria-label={activity.text}>
+						<p className="flex items-baseline gap-2 text-sm">
+							<span
+								className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${ratings[activity.id] ? 'bg-accent text-white' : 'bg-accent-soft text-accent'}`}
+								aria-hidden="true"
+							>
+								{firstNumber + index}
+							</span>
+							{activity.text}
+						</p>
+						<div
+							className="grid grid-cols-5 gap-1.5"
+							role="group"
+							aria-label={`Question ${firstNumber + index}: ${activity.text}`}
+						>
 							{RATING_OPTIONS.map((option) => (
 								<button
 									key={option.value}
@@ -154,7 +169,7 @@ function ActivityCard({
 						</div>
 					</li>
 				))}
-			</ul>
+			</ol>
 			<div className="flex flex-wrap items-center gap-3">
 				<button
 					type="button"
@@ -416,6 +431,7 @@ export default function InterestQuiz() {
 					key={part.toolCallId}
 					input={input}
 					activities={set.activities}
+					firstNumber={input.round === 'focused' ? (activitySets.get('broad')?.activities.length ?? 0) + 1 : 1}
 					disabled={busy || !verified}
 					onSubmit={(output) => addToolOutput({ tool: 'presentActivities', toolCallId: part.toolCallId, output })}
 				/>
@@ -475,6 +491,7 @@ export default function InterestQuiz() {
 
 				{status === 'submitted' && <ThinkingMessage />}
 				{error && <ErrorNote message={error.message} />}
+				{(!setup || (hasResults && !busy)) && <OtherCareerQuizzes />}
 				<div ref={bottomRef} />
 			</section>
 
