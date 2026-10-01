@@ -1,101 +1,48 @@
+import { useEffect, useState } from 'react';
+import type { CAREER_QUIZZES_QUERY_RESULT } from '../../sanity.types';
 import { CARD, EYEBROW } from './chat/styles';
 
-type ExternalQuiz = {
-	name: string;
-	provider: string;
-	url: string;
-	description: string;
-	focus: string;
-	cost: string;
+type CareerQuiz = CAREER_QUIZZES_QUERY_RESULT[number];
+
+/** Mirrors QUIZ_FOCUSES in ../../studio/schemaTypes/careerQuizzes/careerQuiz.ts. */
+const FOCUS_LABELS: Record<NonNullable<CareerQuiz['focus']>, string> = {
+	interests: 'Interests',
+	skills: 'Transferable skills',
+	values: 'Work values',
+	personality: 'Personality',
+	veterans: 'Veterans',
+	students: 'Students',
+	quick: 'Quick check',
 };
 
-const QUIZZES: ExternalQuiz[] = [
-	{
-		name: 'O*NET Interest Profiler',
-		provider: 'U.S. Department of Labor',
-		url: 'https://onetinterestprofiler.org/',
-		description:
-			'The official RIASEC interest inventory this quiz is modeled on. Links every result to O*NET occupation profiles.',
-		focus: 'Interests',
-		cost: 'Free',
-	},
-	{
-		name: 'Interest Assessment',
-		provider: 'CareerOneStop',
-		url: 'https://www.careeronestop.org/toolkit/careers/interest-assessment.aspx',
-		description: '30 quick questions, with matches linked to local wages, training programs, and job listings.',
-		focus: 'Interests',
-		cost: 'Free',
-	},
-	{
-		name: 'mySkills myFuture',
-		provider: 'CareerOneStop',
-		url: 'https://www.myskillsmyfuture.org/',
-		description:
-			'Enter a job you’ve held and see other occupations that use similar skills. Useful after a layoff or when switching fields.',
-		focus: 'Transferable skills',
-		cost: 'Free',
-	},
-	{
-		name: 'My Next Move for Veterans',
-		provider: 'U.S. Department of Labor',
-		url: 'https://www.mynextmove.org/vets/',
-		description: 'Translate a military classification into related civilian careers, or take the interest profiler.',
-		focus: 'Veterans',
-		cost: 'Free',
-	},
-	{
-		name: 'ASVAB Career Exploration Program',
-		provider: 'U.S. Department of Defense',
-		url: 'https://www.asvabprogram.com/',
-		description: 'An interest inventory plus career planning tools for both civilian and military paths, aimed at students.',
-		focus: 'Students',
-		cost: 'Free',
-	},
-	{
-		name: 'Holland Code (RIASEC) Test',
-		provider: 'Open Psychometrics',
-		url: 'https://openpsychometrics.org/tests/RIASEC/',
-		description: 'A 48-item open-source RIASEC test. Handy for comparing against your interest code here.',
-		focus: 'Interests',
-		cost: 'Free',
-	},
-	{
-		name: 'Career Personality Profiler',
-		provider: 'Truity',
-		url: 'https://www.truity.com/test/career-personality-profiler-test',
-		description: 'Combines Holland interests with Big Five personality traits to suggest careers.',
-		focus: 'Personality',
-		cost: 'Free summary, paid full report',
-	},
-	{
-		name: 'Career Test',
-		provider: 'CareerExplorer',
-		url: 'https://www.careerexplorer.com/career-test/',
-		description: 'Asks about interests, personality, and work style, then ranks careers by fit.',
-		focus: 'Personality',
-		cost: 'Free, optional premium',
-	},
-	{
-		name: 'Career Quiz',
-		provider: 'The Princeton Review',
-		url: 'https://www.princetonreview.com/quiz/career-quiz',
-		description: 'A short either-or quiz that suggests careers by interest and work style.',
-		focus: 'Quick check',
-		cost: 'Free',
-	},
-];
+/** Mirrors QUIZ_COSTS in ../../studio/schemaTypes/careerQuizzes/careerQuiz.ts. */
+const COST_LABELS: Record<NonNullable<CareerQuiz['cost']>, string> = {
+	free: 'Free',
+	freemium: 'Free, with paid extras',
+	paid: 'Paid',
+};
 
 export default function OtherCareerQuizzes() {
+	const [quizzes, setQuizzes] = useState<CAREER_QUIZZES_QUERY_RESULT>([]);
+
+	useEffect(() => {
+		fetch('/api/career-quizzes')
+			.then((res) => (res.ok ? res.json() : Promise.reject(new Error(res.statusText))))
+			.then(setQuizzes)
+			.catch(() => setQuizzes([]));
+	}, []);
+
+	if (!quizzes.length) return null;
+
 	return (
 		<details className={`${CARD} group`}>
-			<summary className="flex cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden justify-between gap-2">
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
 				<div>
 					<p className={EYEBROW}>Keep exploring</p>
 					<p className="font-display text-lg font-semibold">Other career quizzes worth trying</p>
 				</div>
 				<span className="text-sm font-semibold text-accent group-open:hidden" aria-hidden="true">
-					Show {QUIZZES.length}
+					Show {quizzes.length}
 				</span>
 				<span className="hidden text-sm font-semibold text-accent group-open:inline" aria-hidden="true">
 					Hide
@@ -103,14 +50,15 @@ export default function OtherCareerQuizzes() {
 			</summary>
 			<p className="mt-3 text-xs text-ink-muted">
 				Each quiz measures fit a little differently. Taking two or three and looking for careers that keep showing up
-				gives you a more reliable shortlist. These sites are run by other organizations and open in a new tab.
+				gives you a more reliable shortlist. Career counselors review every quiz listed here. The sites are run by other
+				organizations and open in a new tab.
 			</p>
 			<ul className="mt-2 divide-y divide-line">
-				{QUIZZES.map((quiz) => (
-					<li key={quiz.url} className="py-3">
+				{quizzes.map((quiz) => (
+					<li key={quiz._id} className="py-3">
 						<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 							<a
-								href={quiz.url}
+								href={quiz.url ?? undefined}
 								target="_blank"
 								rel="noreferrer"
 								className="font-bold text-ink hover:text-accent hover:underline"
@@ -121,10 +69,16 @@ export default function OtherCareerQuizzes() {
 						</div>
 						<p className="mt-1 text-sm text-ink-muted">{quiz.description}</p>
 						<div className="mt-1.5 flex flex-wrap gap-1">
-							<span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
-								{quiz.focus}
-							</span>
-							<span className="rounded-full bg-canvas px-2 py-0.5 text-xs text-ink-muted">{quiz.cost}</span>
+							{quiz.focus && (
+								<span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
+									{FOCUS_LABELS[quiz.focus]}
+								</span>
+							)}
+							{quiz.cost && (
+								<span className="rounded-full bg-canvas px-2 py-0.5 text-xs text-ink-muted">
+									{COST_LABELS[quiz.cost]}
+								</span>
+							)}
 						</div>
 					</li>
 				))}
