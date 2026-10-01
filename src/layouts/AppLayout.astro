@@ -46,7 +46,7 @@ const current = Astro.url.pathname.replace(/\/$/, '') || '/';
 						links.map(({ href, label }) => (
 							<a
 								href={href}
-								aria-current={current === href ? 'page' : undefined}
+								aria-current={current === href || current.startsWith(`${href}/`) ? 'page' : undefined}
 								class="rounded-full px-3 py-2.5 text-[15px] font-semibold text-ink-muted hover:text-accent aria-[current=page]:text-accent"
 							>
 								{label}

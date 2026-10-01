@@ -1,6 +1,7 @@
 import { getToolName, isToolUIPart, lastAssistantMessageIsCompleteWithToolCalls, type UIMessage } from 'ai';
 import { useEffect, useRef, useState } from 'react';
 import HumanCheck from './HumanCheck';
+import BookmarkButton from './bookmarks/BookmarkButton';
 import MarkdownText from './chat/MarkdownText';
 import { ErrorNote, MotBubble, MotMessage, ThinkingMessage, UserMessage } from './chat/Messages';
 import {
@@ -289,9 +290,15 @@ function MatchList({ result }: { result: OccupationMatches }) {
 									.join(' · ')}
 							</p>
 						</div>
-						<a href={`/interview?job=${encodeURIComponent(m.title)}`} className={`${PILL} shrink-0`}>
-							Practice interview
-						</a>
+						<div className="flex shrink-0 gap-2">
+							<BookmarkButton
+								occupation={{ code: m.code, title: m.title, url: m.url, jobZone: m.jobZone }}
+								className="px-3 py-1"
+							/>
+							<a href={`/interview?job=${encodeURIComponent(m.title)}`} className={PILL}>
+								Practice interview
+							</a>
+						</div>
 					</li>
 				))}
 			</ol>
