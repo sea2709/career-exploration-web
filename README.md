@@ -13,9 +13,10 @@ Browser (CareerChat / InterviewCoach / InterestQuiz)
   ├─ POST /api/verify-human  { token }  → Cloudflare siteverify → sets human_session cookie
   ├─ POST /api/chat          → AGENT_URL/chat
   ├─ POST /api/interview     → AGENT_URL/interview
-  └─ POST /api/quiz          → AGENT_URL/quiz
-        (all require a valid human_session cookie, add Authorization: Bearer AGENT_API_TOKEN,
-         and stream the agent's AI SDK UI message stream back)
+  ├─ POST /api/quiz          → AGENT_URL/quiz
+  │     (all require a valid human_session cookie, add Authorization: Bearer AGENT_API_TOKEN,
+  │      and stream the agent's AI SDK UI message stream back)
+  └─ GET  /api/coaching-guides → Sanity CDN (published coachingGuide documents, no agent call)
 ```
 
 ## Stack
@@ -84,6 +85,7 @@ src/
 ├── components/
 │   ├── CareerChat.tsx       # Explorer UI: suggestions, tool-call chips, markdown replies
 │   ├── InterviewCoach.tsx   # Interview UI: setup form, progress, feedback and report cards
+│   ├── CoachingGuidesPanel.tsx  # Side panel (drawer on small screens) listing the published coaching guides
 │   ├── InterestQuiz.tsx     # Quiz UI: setup form, activity rating cards, profile card, match list
 │   ├── HumanCheck.tsx       # Loads Turnstile, exchanges the token at /api/verify-human
 │   ├── MotAvatar.tsx        # Mot, the mascot avatar (used in Astro pages and React components)
@@ -107,6 +109,7 @@ src/
 │   ├── markdown-page.md     # Starter-template leftover
 │   └── api/
 │       ├── chat.ts          # Proxy to the agent's /chat
+│       ├── coaching-guides.ts  # Published coaching guides from Sanity, for the interview side panel
 │       ├── interview.ts     # Proxy to the agent's /interview
 │       ├── quiz.ts          # Proxy to the agent's /quiz
 │       └── verify-human.ts  # Turnstile token → human_session cookie

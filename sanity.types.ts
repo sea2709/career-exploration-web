@@ -15,12 +15,209 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: schema.json
+export type WorkflowDefinition = {
+  _id: string
+  _type: 'workflow.definition'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  title?: string
+  slug?: Slug
+  documentType?: string
+  description?: string
+  forwardOnly?: boolean
+  roles?: Array<
+    {
+      _key: string
+    } & WorkflowRole
+  >
+  stages?: Array<
+    {
+      _key: string
+    } & WorkflowStage
+  >
+  offRamps?: Array<
+    {
+      _key: string
+    } & WorkflowOffRamp
+  >
+}
+
+export type Slug = {
+  _type: 'slug'
+  current?: string
+  source?: string
+}
+
+export type WorkflowAssignment = {
+  _type: 'workflow.assignment'
+  assignmentType?: string
+  userId?: string
+}
+
+export type WorkflowOffRamp = {
+  _type: 'workflow.offRamp'
+  label?: string
+  slug?: Slug
+  icon?: WorkflowLucideIcon
+  tone?: 'caution' | 'critical'
+  stageCriteria?: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: 'span'
+      _key: string
+    }>
+    style?: 'normal'
+    listItem?: 'bullet' | 'number'
+    markDefs?: Array<{
+      href?: string
+      _type: 'link'
+      _key: string
+    }>
+    level?: number
+    _type: 'block'
+    _key: string
+  }>
+  enablePublishing?: boolean
+  unpublishOnEntry?: boolean
+  allowedRoles?: Array<string>
+  enableNotifications?: boolean
+  notifyUserTypes?: Array<string>
+}
+
+export type WorkflowLucideIcon = string
+
+export type WorkflowStage = {
+  _type: 'workflow.stage'
+  label?: string
+  slug?: Slug
+  icon?: WorkflowLucideIcon
+  color?: WorkflowColor
+  stageCriteria?: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: 'span'
+      _key: string
+    }>
+    style?: 'normal'
+    listItem?: 'bullet' | 'number'
+    markDefs?: Array<{
+      href?: string
+      _type: 'link'
+      _key: string
+    }>
+    level?: number
+    _type: 'block'
+    _key: string
+  }>
+  taskTemplates?: Array<
+    {
+      _key: string
+    } & WorkflowTaskTemplate
+  >
+  enableCompletionGating?: boolean
+  gatingOverrideRoles?: Array<string>
+  enablePublishing?: boolean
+  enableNotifications?: boolean
+  notifyUserTypes?: Array<string>
+}
+
+export type WorkflowColor = {
+  _type: 'workflow.color'
+  hex?: string
+  alpha?: number
+  hsl?: HslaColor
+  hsv?: HsvaColor
+  rgb?: RgbaColor
+}
+
+export type WorkflowTaskTemplate = {
+  _type: 'workflow.taskTemplate'
+  title?: string
+  description?: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: 'span'
+      _key: string
+    }>
+    style?: 'normal'
+    listItem?: 'bullet' | 'number'
+    markDefs?: Array<{
+      href?: string
+      _type: 'link'
+      _key: string
+    }>
+    level?: number
+    _type: 'block'
+    _key: string
+  }>
+  assigneeRole?: string
+  dueInDays?: number
+  required?: boolean
+}
+
+export type WorkflowRole = {
+  _type: 'workflow.role'
+  label?: string
+  slug?: Slug
+  description?: string
+  projectRoles?: Array<string>
+}
+
+export type WorkflowSetStatus = {
+  _type: 'workflow.setStatus'
+  statusLabel?: string
+  statusSlug?: string
+  statusIcon?: string
+  completedAt?: string
+  completedBy?: WorkflowUser
+  reason?: string
+}
+
+export type RgbaColor = {
+  _type: 'rgbaColor'
+  r?: number
+  g?: number
+  b?: number
+  a?: number
+}
+
+export type HsvaColor = {
+  _type: 'hsvaColor'
+  h?: number
+  s?: number
+  v?: number
+  a?: number
+}
+
+export type HslaColor = {
+  _type: 'hslaColor'
+  h?: number
+  s?: number
+  l?: number
+  a?: number
+}
+
+export type WorkflowUser = {
+  _type: 'workflow.user'
+  userId?: string
+}
+
 export type CoachingGuide = {
   _id: string
   _type: 'coachingGuide'
   _createdAt: string
   _updatedAt: string
   _rev: string
+  status?: string
+  assignments?: Array<
+    {
+      _key: string
+    } & WorkflowAssignment
+  >
   title?: string
   category?:
     | 'answering'
@@ -47,6 +244,12 @@ export type CoachingGuide = {
     _type: 'block'
     _key: string
   }>
+  statuses?: Array<
+    {
+      _key: string
+    } & WorkflowSetStatus
+  >
+  pendingTransitionReason?: string
 }
 
 export type OnetOccupationMetadataItem = {
@@ -431,12 +634,6 @@ export type SanityAgentContext = {
   instructions?: string
 }
 
-export type Slug = {
-  _type: 'slug'
-  current?: string
-  source?: string
-}
-
 export type SanityImagePaletteSwatch = {
   _type: 'sanity.imagePaletteSwatch'
   background?: string
@@ -551,6 +748,20 @@ export type Geopoint = {
 }
 
 export type AllSanitySchemaTypes =
+  | WorkflowDefinition
+  | Slug
+  | WorkflowAssignment
+  | WorkflowOffRamp
+  | WorkflowLucideIcon
+  | WorkflowStage
+  | WorkflowColor
+  | WorkflowTaskTemplate
+  | WorkflowRole
+  | WorkflowSetStatus
+  | RgbaColor
+  | HsvaColor
+  | HslaColor
+  | WorkflowUser
   | CoachingGuide
   | OnetOccupationMetadataItem
   | OnetInterestReference
@@ -579,7 +790,6 @@ export type AllSanitySchemaTypes =
   | OnetScale
   | OnetContentModelElement
   | SanityAgentContext
-  | Slug
   | SanityImagePaletteSwatch
   | SanityImagePalette
   | SanityImageDimensions
@@ -590,3 +800,48 @@ export type AllSanitySchemaTypes =
   | SanityAssetSourceData
   | SanityImageAsset
   | Geopoint
+
+// Source: ../web/src/pages/api/coaching-guides.ts
+// Variable: COACHING_GUIDES_QUERY
+// Query: *[_type == "coachingGuide" && !(_id in path("drafts.**"))] | order(title asc) { _id, title, category, jobZones, summary, body }
+export type COACHING_GUIDES_QUERY_RESULT = Array<{
+  _id: string
+  title: string | null
+  category:
+    | 'answering'
+    | 'behavioral'
+    | 'feedback'
+    | 'grading'
+    | 'practice'
+    | 'situations'
+    | 'skills'
+    | 'workStyles'
+    | null
+  jobZones: Array<number> | null
+  summary: string | null
+  body: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: 'span'
+      _key: string
+    }>
+    style?: 'h3' | 'normal'
+    listItem?: 'bullet'
+    markDefs?: null
+    level?: number
+    _type: 'block'
+    _key: string
+  }> | null
+}>
+
+// Query TypeMap
+declare global {
+  interface SanityQueries {
+    '*[_type == "coachingGuide" && !(_id in path("drafts.**"))] | order(title asc) { _id, title, category, jobZones, summary, body }': COACHING_GUIDES_QUERY_RESULT
+  }
+}
+// Lets @sanity/client releases that predate the global registry read it too
+declare module '@sanity/client' {
+  interface SanityQueries extends globalThis.SanityQueries {}
+}
