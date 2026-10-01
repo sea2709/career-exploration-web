@@ -5,7 +5,7 @@ import { hasHumanSession } from './human-verification';
 const PASSTHROUGH_HEADERS = ['content-type', 'cache-control', 'x-vercel-ai-ui-message-stream', 'x-accel-buffering'];
 
 /**
- * Forwards a chat request to an agent service route, attaching the API token server-side.
+ * Forwards a request to an agent service route, attaching the API token server-side.
  * Requires a human session; the client treats 403 as "re-verify".
  */
 export async function proxyToAgent(agentPath: string, request: Request, cookies: AstroCookies): Promise<Response> {
