@@ -14,6 +14,37 @@
 
 	--radius-blob: 42% 58% 50% 50% / 52% 48% 52% 48%;
 	--shadow-bubble: 0 1px 2px rgba(23, 19, 43, 0.05);
+
+	--animate-blob-morph: blob-morph 5s ease-in-out infinite;
+	--animate-mot-blink: mot-blink 4.5s ease-in-out infinite;
+
+	@keyframes mot-blink {
+		0%,
+		88%,
+		94%,
+		100% {
+			transform: scaleY(1);
+		}
+		91% {
+			transform: scaleY(0.1);
+		}
+	}
+
+	@keyframes blob-morph {
+		0%,
+		100% {
+			border-radius: 42% 58% 50% 50% / 52% 48% 52% 48%;
+		}
+		25% {
+			border-radius: 60% 40% 34% 66% / 40% 62% 38% 60%;
+		}
+		50% {
+			border-radius: 36% 64% 62% 38% / 64% 36% 64% 36%;
+		}
+		75% {
+			border-radius: 64% 36% 42% 58% / 36% 58% 42% 64%;
+		}
+	}
 }
 
 @layer base {
