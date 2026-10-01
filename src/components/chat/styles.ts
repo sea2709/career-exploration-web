@@ -17,5 +17,7 @@ export const CHOICE =
 	'rounded-[18px] border border-line bg-white p-3 text-left hover:border-accent aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:ring-1 aria-pressed:ring-accent';
 export const PILL =
 	'rounded-full border border-line bg-white px-3 py-1 text-xs font-semibold text-ink-muted hover:border-accent hover:text-accent';
+export const BOOKMARK_TOGGLE =
+	'rounded-full border border-line bg-white text-xs font-semibold text-ink-muted hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent';
 export const STATUS_CHIP =
 	'inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 text-xs font-semibold text-ink-muted';
