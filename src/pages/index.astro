@@ -38,9 +38,11 @@ const bubble = 'rounded-[22px] border border-line bg-white px-[18px] py-3.5 shad
 			</header>
 
 			<div class="flex items-start gap-3">
-				<MotAvatar />
-				<div class="flex min-w-0 grow flex-col gap-2.5">
+				<div class="flex shrink-0 flex-col items-center gap-1">
+					<MotAvatar />
 					<div class="text-[13px] font-bold">Mot</div>
+				</div>
+				<div class="flex min-w-0 grow flex-col gap-2.5">
 					<div class:list={[bubble, 'rounded-tl-md']}>
 						<p>
 							Hi there! Everything I tell you comes from the <a

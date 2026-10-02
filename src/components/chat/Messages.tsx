@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react';
 import MotAvatar from '../MotAvatar';
 
-/** An assistant turn: Mot's avatar and name beside a column of bubbles, cards, and chips. */
+/** An assistant turn: Mot's avatar with its name below, beside a column of bubbles, cards, and chips. */
 export function MotMessage({ children }: { children: ReactNode }) {
 	return (
 		<div className="flex items-start gap-3">
-			<MotAvatar />
-			<div className="flex min-w-0 flex-1 flex-col gap-2.5">
+			<div className="flex shrink-0 flex-col items-center gap-1">
+				<MotAvatar />
 				<div className="text-[13px] font-bold text-ink">Mot</div>
-				<div className="flex flex-col items-start gap-2.5">{children}</div>
 			</div>
+			<div className="flex min-w-0 flex-1 flex-col items-start gap-2.5">{children}</div>
 		</div>
 	);
 }
