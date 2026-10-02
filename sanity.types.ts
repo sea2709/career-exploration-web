@@ -206,34 +206,6 @@ export type WorkflowUser = {
   userId?: string
 }
 
-export type CareerQuiz = {
-  _id: string
-  _type: 'careerQuiz'
-  _createdAt: string
-  _updatedAt: string
-  _rev: string
-  status?: string
-  assignments?: Array<
-    {
-      _key: string
-    } & WorkflowAssignment
-  >
-  name?: string
-  provider?: string
-  url?: string
-  description?: string
-  focus?: 'interests' | 'skills' | 'values' | 'personality' | 'veterans' | 'students' | 'quick'
-  cost?: 'free' | 'freemium' | 'paid'
-  listOrder?: number
-  submitterNotes?: string
-  statuses?: Array<
-    {
-      _key: string
-    } & WorkflowSetStatus
-  >
-  pendingTransitionReason?: string
-}
-
 export type CoachingGuide = {
   _id: string
   _type: 'coachingGuide'
@@ -790,7 +762,6 @@ export type AllSanitySchemaTypes =
   | HsvaColor
   | HslaColor
   | WorkflowUser
-  | CareerQuiz
   | CoachingGuide
   | OnetOccupationMetadataItem
   | OnetInterestReference
@@ -833,56 +804,33 @@ export type AllSanitySchemaTypes =
 // Source: ../web/src/pages/api/career-quizzes.ts
 // Variable: CAREER_QUIZZES_QUERY
 // Query: *[_type == "careerQuiz" && !(_id in path("drafts.**"))] | order(coalesce(listOrder, 1000000) asc, name asc) { _id, name, provider, url, description, focus, cost }
-export type CAREER_QUIZZES_QUERY_RESULT = Array<{
-  _id: string
-  name: string | null
-  provider: string | null
-  url: string | null
-  description: string | null
-  focus:
-    'interests' | 'personality' | 'quick' | 'skills' | 'students' | 'values' | 'veterans' | null
-  cost: 'free' | 'freemium' | 'paid' | null
-}>
+export type CAREER_QUIZZES_QUERY_RESULT = Array<never>
 
-// Source: ../web/src/pages/api/coaching-guides.ts
-// Variable: COACHING_GUIDES_QUERY
-// Query: *[_type == "coachingGuide" && !(_id in path("drafts.**"))] | order(title asc) { _id, title, category, jobZones, summary, body }
-export type COACHING_GUIDES_QUERY_RESULT = Array<{
-  _id: string
+// Source: ../web/src/pages/api/saved-occupations.ts
+// Variable: SAVED_OCCUPATIONS_QUERY
+// Query: *[_type == "onetOccupation" && onetsocCode in $codes]{		"code": onetsocCode,		title,		description,		"jobZone": jobZone->{"level": jobZone, name},		"interests": interestProfile.highPoints,		"education": ratings[domain == "education" && scale->scaleId in ["RL", "RQ"] && dataValue > 0]			| order(dataValue desc){"scale": scale->scaleId, "category": ratingCategory->categoryDescription, "percent": dataValue},		"topSkills": ratings[domain in ["essentialSkills", "transferableSkills"] && scale->scaleId == "IM"]			| order(dataValue desc)[0...3].element->elementName	}
+export type SAVED_OCCUPATIONS_QUERY_RESULT = Array<{
+  code: string | null
   title: string | null
-  category:
-    | 'answering'
-    | 'behavioral'
-    | 'feedback'
-    | 'grading'
-    | 'practice'
-    | 'situations'
-    | 'skills'
-    | 'workStyles'
-    | null
-  jobZones: Array<number> | null
-  summary: string | null
-  body: Array<{
-    children?: Array<{
-      marks?: Array<string>
-      text?: string
-      _type: 'span'
-      _key: string
-    }>
-    style?: 'h3' | 'normal'
-    listItem?: 'bullet'
-    markDefs?: null
-    level?: number
-    _type: 'block'
-    _key: string
+  description: string | null
+  jobZone: {
+    level: number | null
+    name: string | null
+  } | null
+  interests: Array<string> | null
+  education: Array<{
+    scale: string | null
+    category: string | null
+    percent: number | null
   }> | null
+  topSkills: Array<string | null> | null
 }>
 
 // Query TypeMap
 declare global {
   interface SanityQueries {
     '*[_type == "careerQuiz" && !(_id in path("drafts.**"))] | order(coalesce(listOrder, 1000000) asc, name asc) { _id, name, provider, url, description, focus, cost }': CAREER_QUIZZES_QUERY_RESULT
-    '*[_type == "coachingGuide" && !(_id in path("drafts.**"))] | order(title asc) { _id, title, category, jobZones, summary, body }': COACHING_GUIDES_QUERY_RESULT
+    '*[_type == "onetOccupation" && onetsocCode in $codes]{\n\t\t"code": onetsocCode,\n\t\ttitle,\n\t\tdescription,\n\t\t"jobZone": jobZone->{"level": jobZone, name},\n\t\t"interests": interestProfile.highPoints,\n\t\t"education": ratings[domain == "education" && scale->scaleId in ["RL", "RQ"] && dataValue > 0]\n\t\t\t| order(dataValue desc){"scale": scale->scaleId, "category": ratingCategory->categoryDescription, "percent": dataValue},\n\t\t"topSkills": ratings[domain in ["essentialSkills", "transferableSkills"] && scale->scaleId == "IM"]\n\t\t\t| order(dataValue desc)[0...3].element->elementName\n\t}': SAVED_OCCUPATIONS_QUERY_RESULT
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

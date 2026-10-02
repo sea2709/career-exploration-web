@@ -1,6 +1,5 @@
 import { getToolName, isToolUIPart, type UIMessage } from 'ai';
 import { useEffect, useRef, useState } from 'react';
-import CoachingGuidesPanel from './CoachingGuidesPanel';
 import HumanCheck from './HumanCheck';
 import MarkdownText from './chat/MarkdownText';
 import { ErrorNote, MotBubble, MotMessage, ThinkingMessage, UserMessage } from './chat/Messages';
@@ -305,7 +304,6 @@ export default function InterviewCoach() {
 	const { messages, sendMessage, setMessages, status, error, stop, busy, verified, onVerified } =
 		useVerifiedChat('/api/interview');
 	const [answer, setAnswer] = useState('');
-	const [guidesOpen, setGuidesOpen] = useState(false);
 	const bottomRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -337,132 +335,124 @@ export default function InterviewCoach() {
 	};
 
 	return (
-		<div className="mx-auto flex h-full max-w-[1180px] gap-6 lg:px-5">
-			<div className={`${PAGE} min-w-0 flex-1`}>
-				<header className="flex items-start justify-between gap-4 py-6">
-					<div>
-						<h1 className={PAGE_TITLE}>Mock Interview Coach</h1>
-						<p className={PAGE_SUBTITLE}>
-							{setup
-								? `${setup.job} · ${setup.focus} · ${finished ? 'complete' : `question ${Math.min(answered + 1, setup.count)} of ${setup.count}`}`
-								: 'Practice answering questions for a real occupation, graded against O*NET skill levels.'}
-						</p>
-					</div>
-					<div className="flex shrink-0 flex-wrap justify-end gap-2">
-						<button type="button" onClick={() => setGuidesOpen(true)} className={`${OUTLINE_BUTTON} lg:hidden`}>
-							Coaching guides
-						</button>
-						{setup && (
-							<button type="button" onClick={restart} className={OUTLINE_BUTTON}>
-								New interview
+		<div className={PAGE}>
+			<header className="flex items-start justify-between gap-4 py-6">
+				<div>
+					<h1 className={PAGE_TITLE}>Mock Interview Coach</h1>
+					<p className={PAGE_SUBTITLE}>
+						{setup
+							? `${setup.job} · ${setup.focus} · ${finished ? 'complete' : `question ${Math.min(answered + 1, setup.count)} of ${setup.count}`}`
+							: 'Practice answering questions for a real occupation, graded against O*NET skill levels.'}
+					</p>
+				</div>
+				{setup && (
+					<button type="button" onClick={restart} className={`${OUTLINE_BUTTON} shrink-0`}>
+						New interview
+					</button>
+				)}
+			</header>
+
+			{setup && (
+				<div className="mb-4 h-1.5 rounded-full bg-line">
+					<div
+						className="h-full rounded-full bg-accent transition-all"
+						style={{ width: `${(Math.min(answered, setup.count) / setup.count) * 100}%` }}
+					/>
+				</div>
+			)}
+
+			<section className="flex-1 space-y-6 overflow-y-auto pb-6">
+				{!setup && (
+					<MotMessage>
+						<MotBubble>
+							<p>Let's rehearse. Tell me the job, and I'll ask questions built from what that occupation requires.</p>
+						</MotBubble>
+						<SetupForm disabled={!verified || busy} onStart={start} />
+					</MotMessage>
+				)}
+
+				{messages.map((message) => {
+					if (setupOf(message)) return null;
+					if (message.role === 'user') {
+						return (
+							<UserMessage key={message.id}>
+								{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
+							</UserMessage>
+						);
+					}
+					const parts = message.parts.flatMap((part, i) => {
+						if (part.type === 'text') {
+							return (
+								<MotBubble key={i}>
+									<MarkdownText text={part.text} />
+								</MotBubble>
+							);
+						}
+						if (!isToolUIPart(part)) return [];
+						const score = toolOutput<InterviewScore>(part, 'scoreAnswer');
+						if (score) return <ScoreCard key={i} score={score} />;
+						const report = toolOutput<InterviewReport>(part, 'finishInterview');
+						if (report) return <ReportCard key={i} report={report} />;
+						return <StatusChip key={i} part={part} />;
+					});
+					return parts.length ? <MotMessage key={message.id}>{parts}</MotMessage> : null;
+				})}
+
+				{status === 'submitted' && <ThinkingMessage />}
+				{error && <ErrorNote message={error.message} />}
+				<div ref={bottomRef} />
+			</section>
+
+			{!verified && <HumanCheck onVerified={onVerified} />}
+
+			{setup && (
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						send(answer);
+					}}
+					className="flex items-end gap-2 border-t border-line py-4"
+				>
+					<textarea
+						value={answer}
+						onChange={(e) => setAnswer(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter' && !e.shiftKey) {
+								e.preventDefault();
+								send(answer);
+							}
+						}}
+						rows={3}
+						placeholder={
+							finished
+								? 'Ask for a sample answer, or retry a question…'
+								: 'Your answer: the situation, what you did, and the result. Shift+Enter for a new line.'
+						}
+						className={`${INPUT} flex-1 resize-none`}
+					/>
+					<div className="flex flex-col gap-2">
+						{busy ? (
+							<button type="button" onClick={stop} className={STOP_BUTTON}>
+								Stop
+							</button>
+						) : (
+							<button type="submit" disabled={!answer.trim() || !verified} className={PRIMARY_BUTTON}>
+								Send
+							</button>
+						)}
+						{!finished && !busy && answered > 0 && (
+							<button
+								type="button"
+								onClick={() => send('Please end the interview now and give me my report.')}
+								disabled={!verified}
+								className="rounded-full px-4 py-1 text-xs font-semibold text-ink-muted hover:text-accent disabled:opacity-40"
+							>
+								End early
 							</button>
 						)}
 					</div>
-				</header>
-
-				{setup && (
-					<div className="mb-4 h-1.5 rounded-full bg-line">
-						<div
-							className="h-full rounded-full bg-accent transition-all"
-							style={{ width: `${(Math.min(answered, setup.count) / setup.count) * 100}%` }}
-						/>
-					</div>
-				)}
-
-				<section className="flex-1 space-y-6 overflow-y-auto pb-6">
-					{!setup && (
-						<MotMessage>
-							<MotBubble>
-								<p>Let's rehearse. Tell me the job, and I'll ask questions built from what that occupation requires.</p>
-							</MotBubble>
-							<SetupForm disabled={!verified || busy} onStart={start} />
-						</MotMessage>
-					)}
-
-					{messages.map((message) => {
-						if (setupOf(message)) return null;
-						if (message.role === 'user') {
-							return (
-								<UserMessage key={message.id}>
-									{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
-								</UserMessage>
-							);
-						}
-						const parts = message.parts.flatMap((part, i) => {
-							if (part.type === 'text') {
-								return (
-									<MotBubble key={i}>
-										<MarkdownText text={part.text} />
-									</MotBubble>
-								);
-							}
-							if (!isToolUIPart(part)) return [];
-							const score = toolOutput<InterviewScore>(part, 'scoreAnswer');
-							if (score) return <ScoreCard key={i} score={score} />;
-							const report = toolOutput<InterviewReport>(part, 'finishInterview');
-							if (report) return <ReportCard key={i} report={report} />;
-							return <StatusChip key={i} part={part} />;
-						});
-						return parts.length ? <MotMessage key={message.id}>{parts}</MotMessage> : null;
-					})}
-
-					{status === 'submitted' && <ThinkingMessage />}
-					{error && <ErrorNote message={error.message} />}
-					<div ref={bottomRef} />
-				</section>
-
-				{!verified && <HumanCheck onVerified={onVerified} />}
-
-				{setup && (
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							send(answer);
-						}}
-						className="flex items-end gap-2 border-t border-line py-4"
-					>
-						<textarea
-							value={answer}
-							onChange={(e) => setAnswer(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter' && !e.shiftKey) {
-									e.preventDefault();
-									send(answer);
-								}
-							}}
-							rows={3}
-							placeholder={
-								finished
-									? 'Ask for a sample answer, or retry a question…'
-									: 'Your answer: the situation, what you did, and the result. Shift+Enter for a new line.'
-							}
-							className={`${INPUT} flex-1 resize-none`}
-						/>
-						<div className="flex flex-col gap-2">
-							{busy ? (
-								<button type="button" onClick={stop} className={STOP_BUTTON}>
-									Stop
-								</button>
-							) : (
-								<button type="submit" disabled={!answer.trim() || !verified} className={PRIMARY_BUTTON}>
-									Send
-								</button>
-							)}
-							{!finished && !busy && answered > 0 && (
-								<button
-									type="button"
-									onClick={() => send('Please end the interview now and give me my report.')}
-									disabled={!verified}
-									className="rounded-full px-4 py-1 text-xs font-semibold text-ink-muted hover:text-accent disabled:opacity-40"
-								>
-									End early
-								</button>
-							)}
-						</div>
-					</form>
-				)}
-			</div>
-			<CoachingGuidesPanel open={guidesOpen} onClose={() => setGuidesOpen(false)} />
+				</form>
+			)}
 		</div>
 	);
 }
