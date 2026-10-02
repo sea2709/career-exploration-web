@@ -4,19 +4,16 @@ import AppLayout from '../layouts/AppLayout.astro';
 
 const features = [
 	{
-		step: 1,
 		title: 'Take the Interest Quiz',
 		href: '/quiz',
 		pitch: 'Find which kinds of work you actually enjoy.',
 	},
 	{
-		step: 2,
 		title: 'Explore careers',
 		href: '/explore',
 		pitch: 'Ask me about any job, then save and compare favorites.',
 	},
 	{
-		step: 3,
 		title: 'Practice an interview',
 		href: '/interview',
 		pitch: 'Rehearse with feedback tied to the job.',
@@ -53,36 +50,23 @@ const bubble = 'rounded-[22px] border border-line bg-white px-[18px] py-3.5 shad
 						</p>
 					</div>
 					<div class={bubble}>
-						<p>Where would you like to start? If you're new here, most people begin with the quiz.</p>
+						<p>What can I help you with today?</p>
 					</div>
-					<ol class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3 pt-1">
+					<ul class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3 pt-1">
 						{
-							features.map(({ step, title, href, pitch }) => (
+							features.map(({ title, href, pitch }) => (
 								<li class="flex">
 									<a
 										href={href}
-										class:list={[
-											'flex min-h-11 grow flex-col gap-1.5 rounded-[18px] bg-white p-4 text-ink no-underline transition-colors hover:text-ink',
-											step === 1
-												? 'border-[1.5px] border-accent hover:bg-accent-soft'
-												: 'border border-line hover:border-accent',
-										]}
+										class="flex min-h-11 grow flex-col gap-1.5 rounded-[18px] border border-line bg-white p-4 text-ink no-underline transition-colors hover:border-accent hover:text-ink"
 									>
-										<span
-											class:list={[
-												'flex size-[30px] items-center justify-center rounded-full font-display text-[15px] font-semibold',
-												step === 1 ? 'bg-accent text-white' : 'bg-accent-soft text-accent',
-											]}
-										>
-											{step}
-										</span>
 										<span class="font-display text-lg/[1.25] font-semibold">{title}</span>
 										<span class="text-sm text-ink-muted">{pitch}</span>
 									</a>
 								</li>
 							))
 						}
-					</ol>
+					</ul>
 				</div>
 			</div>
 		</div>
