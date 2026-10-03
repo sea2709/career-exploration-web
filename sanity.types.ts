@@ -206,6 +206,34 @@ export type WorkflowUser = {
   userId?: string
 }
 
+export type CareerQuiz = {
+  _id: string
+  _type: 'careerQuiz'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  status?: string
+  assignments?: Array<
+    {
+      _key: string
+    } & WorkflowAssignment
+  >
+  name?: string
+  provider?: string
+  url?: string
+  description?: string
+  focus?: 'interests' | 'skills' | 'values' | 'personality' | 'veterans' | 'students' | 'quick'
+  cost?: 'free' | 'freemium' | 'paid'
+  listOrder?: number
+  submitterNotes?: string
+  statuses?: Array<
+    {
+      _key: string
+    } & WorkflowSetStatus
+  >
+  pendingTransitionReason?: string
+}
+
 export type CoachingGuide = {
   _id: string
   _type: 'coachingGuide'
@@ -762,6 +790,7 @@ export type AllSanitySchemaTypes =
   | HsvaColor
   | HslaColor
   | WorkflowUser
+  | CareerQuiz
   | CoachingGuide
   | OnetOccupationMetadataItem
   | OnetInterestReference
@@ -804,7 +833,16 @@ export type AllSanitySchemaTypes =
 // Source: ../web/src/pages/api/career-quizzes.ts
 // Variable: CAREER_QUIZZES_QUERY
 // Query: *[_type == "careerQuiz" && !(_id in path("drafts.**"))] | order(coalesce(listOrder, 1000000) asc, name asc) { _id, name, provider, url, description, focus, cost }
-export type CAREER_QUIZZES_QUERY_RESULT = Array<never>
+export type CAREER_QUIZZES_QUERY_RESULT = Array<{
+  _id: string
+  name: string | null
+  provider: string | null
+  url: string | null
+  description: string | null
+  focus:
+    'interests' | 'personality' | 'quick' | 'skills' | 'students' | 'values' | 'veterans' | null
+  cost: 'free' | 'freemium' | 'paid' | null
+}>
 
 // Source: ../web/src/pages/api/saved-occupations.ts
 // Variable: SAVED_OCCUPATIONS_QUERY
