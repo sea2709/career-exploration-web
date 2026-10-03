@@ -17,6 +17,24 @@
 
 	--animate-blob-morph: blob-morph 5s ease-in-out infinite;
 	--animate-mot-blink: mot-blink 4.5s ease-in-out infinite;
+	--animate-thinking-dots: thinking-dots 3s step-end infinite;
+
+	@keyframes thinking-dots {
+		0% {
+			clip-path: inset(0 100% 0 0);
+		}
+		16.667%,
+		83.333% {
+			clip-path: inset(0 66.667% 0 0);
+		}
+		33.333%,
+		66.667% {
+			clip-path: inset(0 33.333% 0 0);
+		}
+		50% {
+			clip-path: inset(0);
+		}
+	}
 
 	@keyframes mot-blink {
 		0%,

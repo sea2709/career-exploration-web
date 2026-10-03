@@ -35,6 +35,26 @@ const SUGGESTIONS = [
 	'Jobs working with animals that need less than a bachelor’s degree?',
 ];
 
+const DEFAULT_PLACEHOLDER = 'What kind of work interests you?';
+
+const NEXT_QUESTION_OPEN = '<next-question>';
+const NEXT_QUESTION_CLOSE = '</next-question>';
+
+/** Splits the explorer's trailing `<next-question>` line off a reply, hiding it while it streams in. */
+function splitNextQuestion(text: string): { body: string; nextQuestion: string } {
+	const start = text.indexOf(NEXT_QUESTION_OPEN);
+	if (start >= 0) {
+		const rest = text.slice(start + NEXT_QUESTION_OPEN.length);
+		const end = rest.indexOf(NEXT_QUESTION_CLOSE);
+		return { body: text.slice(0, start).trimEnd(), nextQuestion: end >= 0 ? rest.slice(0, end).trim() : '' };
+	}
+	const partial = text.lastIndexOf('<');
+	if (partial >= 0 && NEXT_QUESTION_OPEN.startsWith(text.slice(partial))) {
+		return { body: text.slice(0, partial).trimEnd(), nextQuestion: '' };
+	}
+	return { body: text, nextQuestion: '' };
+}
+
 function ToolChip({ part }: { part: Parameters<typeof getToolName>[0] }) {
 	const name = getToolName(part);
 	const label = TOOL_LABELS[name] ?? name;
@@ -96,6 +116,14 @@ export default function CareerChat() {
 	const initialQuestion = useRef(new URLSearchParams(window.location.search).get('q'));
 	const [input, setInput] = useState(initialQuestion.current ?? '');
 	const bottomRef = useRef<HTMLDivElement>(null);
+
+	const lastMessage = messages.at(-1);
+	const suggestion =
+		!busy && lastMessage?.role === 'assistant'
+			? (lastMessage.parts
+					.map((part) => (part.type === 'text' ? splitNextQuestion(part.text).nextQuestion : ''))
+					.findLast(Boolean) ?? '')
+			: '';
 
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -160,9 +188,11 @@ export default function CareerChat() {
 						}
 						const parts = message.parts.flatMap((part, i) => {
 							if (part.type === 'text') {
+								const { body } = splitNextQuestion(part.text);
+								if (!body) return [];
 								return (
 									<MotBubble key={i}>
-										<MarkdownText text={part.text} components={MARKDOWN_COMPONENTS} />
+										<MarkdownText text={body} components={MARKDOWN_COMPONENTS} />
 									</MotBubble>
 								);
 							}
@@ -185,12 +215,26 @@ export default function CareerChat() {
 					}}
 					className="flex gap-2 border-t border-line py-4"
 				>
-					<input
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						placeholder="What kind of work interests you?"
-						className={`${INPUT} min-h-11 flex-1`}
-					/>
+					<div className="relative flex min-w-0 flex-1">
+						<input
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === 'Tab' && !e.shiftKey && !input && suggestion) {
+									e.preventDefault();
+									setInput(suggestion);
+								}
+							}}
+							placeholder={suggestion || DEFAULT_PLACEHOLDER}
+							title={suggestion ? 'Press Tab to use the suggested question' : undefined}
+							className={`${INPUT} min-h-11 w-full ${suggestion && !input ? 'pr-14' : ''}`}
+						/>
+						{suggestion && !input && (
+							<kbd className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 rounded-md border border-line bg-canvas px-1.5 py-0.5 font-sans text-xs text-ink-muted">
+								Tab
+							</kbd>
+						)}
+					</div>
 					{busy ? (
 						<button type="button" onClick={stop} className={STOP_BUTTON}>
 							Stop

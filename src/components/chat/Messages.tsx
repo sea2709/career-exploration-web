@@ -35,7 +35,12 @@ export function UserMessage({ children }: { children: ReactNode }) {
 export function ThinkingMessage() {
 	return (
 		<MotMessage>
-			<p className="text-sm text-ink-muted">Thinking…</p>
+			<p className="text-sm text-ink-muted" role="status">
+				Thinking
+				<span aria-hidden="true" className="inline-block motion-safe:animate-thinking-dots">
+					...
+				</span>
+			</p>
 		</MotMessage>
 	);
 }
