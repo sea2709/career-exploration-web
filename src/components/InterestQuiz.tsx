@@ -2,7 +2,7 @@ import { getToolName, isToolUIPart, lastAssistantMessageIsCompleteWithToolCalls,
 import { useEffect, useRef, useState } from 'react';
 import HumanCheck from './HumanCheck';
 import BookmarkButton from './bookmarks/BookmarkButton';
-import OtherCareerQuizzes from './OtherCareerQuizzes';
+import OtherCareerQuizzes, { useCareerQuizzes } from './OtherCareerQuizzes';
 import MarkdownText from './chat/MarkdownText';
 import { ErrorNote, MotBubble, MotMessage, ThinkingMessage, UserMessage } from './chat/Messages';
 import {
@@ -80,6 +80,45 @@ const TYPE_COLORS: Record<string, string> = {
 	E: 'bg-amber-500',
 	C: 'bg-indigo-500',
 };
+
+const RIASEC_TYPES: { code: string; name: string; summary: string; examples: string }[] = [
+	{
+		code: 'R',
+		name: 'Realistic',
+		summary: 'Hands-on, practical work with tools, machines, materials, plants, or animals, often outdoors.',
+		examples: 'Electrician, Carpenter, Farmer',
+	},
+	{
+		code: 'I',
+		name: 'Investigative',
+		summary: 'Working with ideas: researching facts, analyzing, and figuring out problems.',
+		examples: 'Chemist, Software Developer, Economist',
+	},
+	{
+		code: 'A',
+		name: 'Artistic',
+		summary: 'Creating with forms, designs, words, or sound, with room for self-expression and few set rules.',
+		examples: 'Graphic Designer, Writer, Musician',
+	},
+	{
+		code: 'S',
+		name: 'Social',
+		summary: 'Helping, teaching, caring for, or advising other people.',
+		examples: 'Teacher, Nurse, Counselor',
+	},
+	{
+		code: 'E',
+		name: 'Enterprising',
+		summary: 'Starting projects, leading people, persuading, and making decisions, often in business.',
+		examples: 'Sales Manager, Lawyer, Real Estate Agent',
+	},
+	{
+		code: 'C',
+		name: 'Conventional',
+		summary: 'Organizing data and details, following clear procedures and routines.',
+		examples: 'Accountant, Bookkeeper, Paralegal',
+	},
+];
 
 const STATUS_LABELS: Record<string, string> = {
 	getQuizActivities: 'Picking activities',
@@ -197,6 +236,56 @@ function ActivityCard({
 	);
 }
 
+function RiasecGuide({ className = '' }: { className?: string }) {
+	return (
+		<details className={`group ${className}`}>
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-display font-semibold hover:text-accent [&::-webkit-details-marker]:hidden">
+				What is the RIASEC interest model?
+				<span className="text-ink-muted transition-transform group-open:rotate-180" aria-hidden="true">
+					▾
+				</span>
+			</summary>
+			<div className="mt-3 space-y-4 text-[15px]">
+				<p className="text-ink-muted">
+					O*NET groups work interests into six types, based on psychologist John Holland's theory of career choice. Each
+					letter in RIASEC stands for one type. Most people, and most jobs, are a mix of two or three. The quiz measures
+					what you'd <em>enjoy</em> doing, not what you're good at or have done before.
+				</p>
+				<ul className="grid gap-2 sm:grid-cols-2">
+					{RIASEC_TYPES.map((t) => (
+						<li key={t.code} className={`${INSET} flex gap-3`}>
+							<span
+								className={`flex size-7 shrink-0 items-center justify-center rounded-lg font-display font-semibold text-white ${TYPE_COLORS[t.code]}`}
+								aria-hidden="true"
+							>
+								{t.code}
+							</span>
+							<div>
+								<p className="font-display font-semibold">{t.name}</p>
+								<p className="text-sm text-ink-muted">{t.summary}</p>
+								<p className="mt-1 text-[13px] text-ink-muted/80">For example: {t.examples}</p>
+							</div>
+						</li>
+					))}
+				</ul>
+				<div className="space-y-2 text-sm text-ink-muted">
+					<p>
+						<span className="font-bold text-ink">Your interest code.</span> Your three strongest types, in order, make up
+						your interest code (also called a Holland code), such as “SIA”. Each type is scored on O*NET's 1–7 interest
+						scale.
+					</p>
+					<p>
+						<span className="font-bold text-ink">How matches are scored.</span> O*NET rates every occupation on the same
+						six types. The match percentage mostly reflects how closely the shape of your profile follows the
+						occupation's: which types are high and which are low, rather than the exact numbers. After round 2, it also
+						counts how much you liked the specific work areas the occupation is strongest in.
+					</p>
+				</div>
+			</div>
+		</details>
+	);
+}
+
 function RatedSummary({ output }: { output: RatingsOutput }) {
 	const count = (...values: Rating[]) => output.ratings.filter((x) => values.includes(x.rating)).length;
 	return (
@@ -274,6 +363,8 @@ function ProfileCard({ profile }: { profile: InterestProfile }) {
 					</div>
 				</div>
 			)}
+
+			<RiasecGuide className="border-t border-line pt-4" />
 		</div>
 	);
 }
@@ -372,6 +463,8 @@ export default function InterestQuiz() {
 	const { messages, sendMessage, setMessages, addToolOutput, status, error, stop, busy, verified, onVerified } =
 		useVerifiedChat('/api/quiz', { sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls });
 	const [question, setQuestion] = useState('');
+	const quizzes = useCareerQuizzes();
+	const [quizzesOpen, setQuizzesOpen] = useState(false);
 	const bottomRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -452,83 +545,93 @@ export default function InterestQuiz() {
 	};
 
 	return (
-		<div className={PAGE}>
-			<header className="flex items-start justify-between gap-4 py-6">
-				<div>
-					<h1 className={PAGE_TITLE}>Interest Quiz</h1>
-					<p className={PAGE_SUBTITLE}>
-						{setup
-							? `${step} · ${setup.maxJobZone ? `Job Zone ${setup.maxJobZone} or below` : 'any preparation level'}`
-							: 'Find occupations that fit what you enjoy, using the O*NET RIASEC interest model.'}
-					</p>
-				</div>
-				{setup && (
-					<button type="button" onClick={restart} className={`${OUTLINE_BUTTON} shrink-0`}>
-						Retake quiz
-					</button>
-				)}
-			</header>
+		<div className="mx-auto flex h-full max-w-[1180px] gap-6 lg:px-5">
+			<div className={`${PAGE} min-w-0 flex-1`}>
+				<header className="flex items-start justify-between gap-4 py-6">
+					<div>
+						<h1 className={PAGE_TITLE}>Interest Quiz</h1>
+						<p className={PAGE_SUBTITLE}>
+							{setup
+								? `${step} · ${setup.maxJobZone ? `Job Zone ${setup.maxJobZone} or below` : 'any preparation level'}`
+								: 'Find occupations that fit what you enjoy, using the O*NET RIASEC interest model.'}
+						</p>
+					</div>
+					<div className="flex shrink-0 flex-wrap justify-end gap-2">
+						{setup && (
+							<button type="button" onClick={restart} className={OUTLINE_BUTTON}>
+								Retake quiz
+							</button>
+						)}
+						{quizzes.length > 0 && (
+							<button type="button" onClick={() => setQuizzesOpen(true)} className={`${OUTLINE_BUTTON} lg:hidden`}>
+								Other quizzes ({quizzes.length})
+							</button>
+						)}
+					</div>
+				</header>
 
-			<section className="flex-1 space-y-6 overflow-y-auto pb-6">
-				{!setup && (
-					<MotMessage>
-						<MotBubble>
-							<p>
-								Rate about 35 everyday work activities by whether you'd <em>enjoy</em> them, not whether you have the
-								experience. Your answers become a RIASEC interest profile, matched against how O*NET rates every
-								occupation.
-							</p>
-						</MotBubble>
-						<SetupForm disabled={!verified || busy} onStart={start} />
-					</MotMessage>
-				)}
-
-				{messages.map((message) => {
-					if (setupOf(message)) return null;
-					if (message.role === 'user') {
-						return (
-							<UserMessage key={message.id}>
-								{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
-							</UserMessage>
-						);
-					}
-					const parts = message.parts.map(renderPart).filter(Boolean);
-					return parts.length ? <MotMessage key={message.id}>{parts}</MotMessage> : null;
-				})}
-
-				{status === 'submitted' && <ThinkingMessage />}
-				{error && <ErrorNote message={error.message} />}
-				{(!setup || (hasResults && !busy)) && <OtherCareerQuizzes />}
-				<div ref={bottomRef} />
-			</section>
-
-			{!verified && <HumanCheck onVerified={onVerified} />}
-
-			{setup && hasResults && !awaitingRatings && (
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						send(question);
-					}}
-					className="flex items-end gap-2 border-t border-line py-4"
-				>
-					<input
-						value={question}
-						onChange={(e) => setQuestion(e.target.value)}
-						placeholder="Ask about a match, or try “show jobs with less training”…"
-						className={`${INPUT} min-h-11 flex-1`}
-					/>
-					{busy ? (
-						<button type="button" onClick={stop} className={STOP_BUTTON}>
-							Stop
-						</button>
-					) : (
-						<button type="submit" disabled={!question.trim() || !verified} className={PRIMARY_BUTTON}>
-							Send
-						</button>
+				<section className="flex-1 space-y-6 overflow-y-auto pb-6">
+					{!setup && (
+						<MotMessage>
+							<MotBubble>
+								<p>
+									Rate about 35 everyday work activities by whether you'd <em>enjoy</em> them, not whether you have the
+									experience. Your answers become a RIASEC interest profile, matched against how O*NET rates every
+									occupation.
+								</p>
+							</MotBubble>
+							<RiasecGuide className={CARD} />
+							<SetupForm disabled={!verified || busy} onStart={start} />
+						</MotMessage>
 					)}
-				</form>
-			)}
+
+					{messages.map((message) => {
+						if (setupOf(message)) return null;
+						if (message.role === 'user') {
+							return (
+								<UserMessage key={message.id}>
+									{message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
+								</UserMessage>
+							);
+						}
+						const parts = message.parts.map(renderPart).filter(Boolean);
+						return parts.length ? <MotMessage key={message.id}>{parts}</MotMessage> : null;
+					})}
+
+					{status === 'submitted' && <ThinkingMessage />}
+					{error && <ErrorNote message={error.message} />}
+					<div ref={bottomRef} />
+				</section>
+
+				{!verified && <HumanCheck onVerified={onVerified} />}
+
+				{setup && hasResults && !awaitingRatings && (
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							send(question);
+						}}
+						className="flex items-end gap-2 border-t border-line py-4"
+					>
+						<input
+							value={question}
+							onChange={(e) => setQuestion(e.target.value)}
+							placeholder="Ask about a match, or try “show jobs with less training”…"
+							className={`${INPUT} min-h-11 flex-1`}
+						/>
+						{busy ? (
+							<button type="button" onClick={stop} className={STOP_BUTTON}>
+								Stop
+							</button>
+						) : (
+							<button type="submit" disabled={!question.trim() || !verified} className={PRIMARY_BUTTON}>
+								Send
+							</button>
+						)}
+					</form>
+				)}
+			</div>
+			<OtherCareerQuizzes quizzes={quizzes} open={quizzesOpen} onClose={() => setQuizzesOpen(false)} />
 		</div>
 	);
 }
